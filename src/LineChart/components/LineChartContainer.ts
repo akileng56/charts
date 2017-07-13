@@ -27,7 +27,8 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
 
         this.state = {
             alertMessage: LineChartContainer.validateProps(this.props),
-            data: [] };
+            data: []
+        };
         this.fetchData = this.fetchData.bind(this);
         this.handleSubscription = this.handleSubscription.bind(this);
     }
@@ -117,7 +118,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
             },
             error: error => this.setState({
                 alertMessage: `An error occurred while retrieving data via XPath (${xpath}): ${error}`,
-                data: this.data
+                data: []
             }),
             filter: {
                 attributes: [ seriesObject.xAttribute, seriesObject.yAttribute ],
@@ -128,14 +129,15 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     }
 
     private fetchByMicroflow(guid: string, seriesObject: SerieConfig, count: number, index: number) {
-        mx.ui.action(seriesObject.dataSourceMicroflow, {
+        const actionname = seriesObject.dataSourceMicroflow;
+        mx.ui.action(actionname, {
             callback: mxObjects => {
                 const lineData = this.processData(mxObjects as mendix.lib.MxObject[], seriesObject);
                 this.addData(lineData, count === index + 1);
             },
             error: error => this.setState({
-                alertMessage: `Error while retrieving microflow data ${seriesObject.dataSourceMicroflow}: ${error.message}`,
-                data: this.data
+                alertMessage: `Error while retrieving microflow data ${actionname}: ${error.message}`,
+                data: []
             }),
             params: {
                 applyto: "selection",

@@ -1,6 +1,7 @@
+/* tslint:disable */
 export default ModelProps;
 
-export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines" | "text+lines+markers" | "none";
+export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines"| "text+lines+markers" | "none";
 export interface ModelProps {
     seriesConfig: serieConfig[];
     width: number;
