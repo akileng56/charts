@@ -48,10 +48,12 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     private renderChart(data?: ScatterData[], mxObject?: mendix.lib.MxObject) {
-        if (this.lineChart && mxObject) {
-            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, this.props.layout);
-        } else {
-            this.Plotly.purge(this.lineChart);
+        if (this.lineChart) {
+            if (mxObject) {
+                this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, this.props.layout);
+            } else {
+                this.Plotly.purge(this.lineChart);
+            }
         }
     }
 }
