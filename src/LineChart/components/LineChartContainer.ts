@@ -2,7 +2,8 @@ import { Component, createElement } from "react";
 
 import { Datum, ScatterData } from "plotly.js";
 import { LineChart } from "./LineChart";
-import { Mode, ModelProps, serieConfig } from "../LineChart";
+import { Mode, ModelProps, SerieConfig } from "../LineChart";
+import { Alert } from "./Alert";
 
 interface LineChartContainerProps extends ModelProps {
     class?: string;
@@ -13,6 +14,7 @@ interface LineChartContainerProps extends ModelProps {
 }
 
 interface LineChartContainerState {
+    alertMessage?: string;
     data?: ScatterData[];
 }
 
@@ -23,12 +25,17 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     constructor(props: LineChartContainerProps) {
         super(props);
 
-        this.state = { data: [] };
+        this.state = {
+            alertMessage: LineChartContainer.validateProps(this.props),
+            data: [] };
         this.fetchData = this.fetchData.bind(this);
         this.handleSubscription = this.handleSubscription.bind(this);
     }
 
     render() {
+        if (this.state.alertMessage) {
+            return createElement(Alert, { message: this.state.alertMessage });
+        }
         return createElement(LineChart, {
             data: this.state.data,
             layout: {
@@ -52,6 +59,21 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     componentWillReceiveProps(newProps: LineChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
         this.fetchData(newProps.mxObject);
+    }
+
+    public static validateProps(props: LineChartContainerProps): string {
+        let errorMessage = "";
+        const incorrectObjectingNames = props.seriesConfig
+            .filter(object => object.sourceType === "microflow" && !object.dataSourceMicroflow)
+            .map(incorrect => incorrect.traceName)
+            .join(", ");
+
+        if (incorrectObjectingNames) {
+            errorMessage += `object : ${incorrectObjectingNames}` +
+                ` - data source type is set to 'Microflow' but 'Source - microflow' is missing \n`;
+        }
+
+        return errorMessage && `Configuration error :\n\n ${errorMessage}`;
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
@@ -87,13 +109,14 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         }
     }
 
-    private fetchByXPath(seriesObject: serieConfig, xpath: string, count: number, index: number) {
+    private fetchByXPath(seriesObject: SerieConfig, xpath: string, count: number, index: number) {
         window.mx.data.get({
             callback: mxObjects => {
                 const lineData = this.processData(mxObjects, seriesObject);
                 this.addData(lineData, count === index + 1);
             },
-            error: () => this.setState({
+            error: error => this.setState({
+                alertMessage: `An error occurred while retrieving data via XPath (${xpath}): ${error}`,
                 data: this.data
             }),
             filter: {
@@ -104,13 +127,14 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         });
     }
 
-    private fetchByMicroflow(guid: string, seriesObject: serieConfig, count: number, index: number) {
+    private fetchByMicroflow(guid: string, seriesObject: SerieConfig, count: number, index: number) {
         mx.ui.action(seriesObject.dataSourceMicroflow, {
             callback: mxObjects => {
                 const lineData = this.processData(mxObjects as mendix.lib.MxObject[], seriesObject);
                 this.addData(lineData, count === index + 1);
             },
-            error: () => this.setState({
+            error: error => this.setState({
+                alertMessage: `Error while retrieving microflow data ${seriesObject.dataSourceMicroflow}: ${error.message}`,
                 data: this.data
             }),
             params: {
@@ -120,7 +144,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         });
     }
 
-    private processData(seriesData: mendix.lib.MxObject[], seriesObject: serieConfig): ScatterData {
+    private processData(seriesData: mendix.lib.MxObject[], seriesObject: SerieConfig): ScatterData {
         const fetchedData = seriesData.map(value => {
             return {
                 x: parseInt(value.get(seriesObject.xAttribute) as string, 10) as Datum,

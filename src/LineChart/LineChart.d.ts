@@ -11,7 +11,7 @@ export interface ModelProps {
     yAxisLabel: string;
 }
 
-export interface serieConfig {
+export interface SerieConfig {
      name: string;
      entity: string;
      sourceType: "xpath" | "microflow";
@@ -19,6 +19,6 @@ export interface serieConfig {
      dataSourceMicroflow: string;
      xAttribute: string;
      yAttribute: string;
-     mode: Mode
+     mode: Mode;
      lineColor: string;
  }
