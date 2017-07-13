@@ -4,15 +4,15 @@
     <description>Create Line chart</description>
     <icon/>
     <properties>
-        <property key="traceConfigs" type="object" isList="true" required="false">
-            <caption>Traces</caption>
+        <property key="seriesConfig" type="object" isList="true" required="false">
+            <caption>Series</caption>
             <category>Data source</category>
-            <description>Add a trace and configure its properties</description>
+            <description>Add a serie and configure its properties</description>
             <properties>
-                <property key="traceName" type="string">
+                <property key="name" type="string">
                     <caption>Name</caption>
                     <category>Data source</category>
-                    <description>Trace name</description>
+                    <description>Used in the legend</description>
                 </property>
                 <property key="entity" type="entity" pathType="reference" isPath="optional">
                     <caption>Data entity</caption>
@@ -40,7 +40,7 @@
                     <returnType type="Object" entityProperty="entity" isList="true"/>
                 </property>
                 <property key="xAttribute" type="attribute" entityProperty="entity">
-                    <caption>X-axis date attribute</caption>
+                    <caption>X-axis data attribute</caption>
                     <category>Data source</category>
                     <description>Attribute containing x-axis dates</description>
                     <attributeTypes>
@@ -71,32 +71,32 @@
                             <enumerationValue key="linesomarkers">Lines with Markers</enumerationValue>
                         </enumerationValues>
                 </property>
+                <property key="lineColor" type="string" required="false">
+                    <caption>Line color</caption>
+                    <category>Appearance</category>
+                    <description>Line color</description>
+                </property>
             </properties>
+        </property>
+        <property key="xAxisLabel" type="string" required="false">
+            <caption>X-axis label</caption>
+            <category>X-axis</category>
+            <description>Label for the x-axis (horizontal)</description>
+        </property>
+        <property key="yAxisLabel" type="string" required="false">
+            <caption>Y-axis label</caption>
+            <category>Y-axis</category>
+            <description>Label for the y-axis (vertical)</description>
         </property>
         <property key="title" type="string" required="false">
             <caption>Chart title</caption>
             <category>Appearance</category>
             <description>Chart title</description>
         </property>
-        <property key="xAxisLabel" type="string" required="false">
-            <caption>X-axis label</caption>
-            <category>Appearance</category>
-            <description>Label for the x-axis (horizontal)</description>
-        </property>
-        <property key="yAxisLabel" type="string" required="false">
-            <caption>Y-axis label</caption>
-            <category>Appearance</category>
-            <description>Label for the y-axis (vertical)</description>
-        </property>
         <property key="showGrid" type="boolean" defaultValue="true">
             <caption>Show grids</caption>
             <category>Appearance</category>
             <description>Chart grids</description>
-        </property>
-        <property key="showLegend" type="boolean" defaultValue="true">
-            <caption>Show legend</caption>
-            <category>Appearance</category>
-            <description>Chart legend</description>
         </property>
         <property key="width" type="integer" defaultValue="900">
             <caption>Chart width</caption>

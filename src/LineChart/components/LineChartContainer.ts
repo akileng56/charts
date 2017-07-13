@@ -2,7 +2,7 @@ import { Component, createElement } from "react";
 
 import { Datum, ScatterData } from "plotly.js";
 import { LineChart } from "./LineChart";
-import { Mode, ModelProps, traceConfig } from "../LineChart";
+import { Mode, ModelProps, serieConfig } from "../LineChart";
 
 interface LineChartContainerProps extends ModelProps {
     class?: string;
@@ -33,7 +33,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
             data: this.state.data,
             layout: {
                 height: this.props.height,
-                showlegend: this.props.showLegend,
+                showlegend: true,
                 title: this.props.title,
                 width: this.props.width,
                 xaxis: {
@@ -72,43 +72,43 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
         if (mxObject) {
-            const { traceConfigs } = this.props;
-            traceConfigs.forEach((object, index) => {
-                if (object.sourceType === "xpath") {
-                    const constraint = object.entityConstraint
-                        ? object.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
+            const { seriesConfig } = this.props;
+            seriesConfig.forEach((serieObject, index) => {
+                if (serieObject.sourceType === "xpath") {
+                    const constraint = serieObject.entityConstraint
+                        ? serieObject.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
                         : "";
-                    const XPath = "//" + object.entity + constraint;
-                    this.fetchByXPath(object, XPath, traceConfigs.length, index);
-                } else if (object.sourceType === "microflow" && object.dataSourceMicroflow) {
-                    this.fetchByMicroflow(mxObject.getGuid(), object, traceConfigs.length, index);
+                    const XPath = "//" + serieObject.entity + constraint;
+                    this.fetchByXPath(serieObject, XPath, seriesConfig.length, index);
+                } else if (serieObject.sourceType === "microflow" && serieObject.dataSourceMicroflow) {
+                    this.fetchByMicroflow(mxObject.getGuid(), serieObject, seriesConfig.length, index);
                 }
             });
         }
     }
 
-    private fetchByXPath(object: traceConfig, xpath: string, count: number, index: number) {
+    private fetchByXPath(seriesObject: serieConfig, xpath: string, count: number, index: number) {
         window.mx.data.get({
-            callback: tracesData => {
-                const lineData = this.processData(tracesData, object);
-                this.addTraces(lineData, count === index + 1);
+            callback: mxObjects => {
+                const lineData = this.processData(mxObjects, seriesObject);
+                this.addData(lineData, count === index + 1);
             },
             error: () => this.setState({
                 data: this.data
             }),
             filter: {
-                attributes: [ object.xAttribute, object.yAttribute ],
-                sort: [ [ object.xAttribute, "asc" ] ]
+                attributes: [ seriesObject.xAttribute, seriesObject.yAttribute ],
+                sort: [ [ seriesObject.xAttribute, "asc" ] ]
             },
             xpath
         });
     }
 
-    private fetchByMicroflow(guid: string, object: traceConfig, count: number, index: number) {
-        mx.ui.action(object.dataSourceMicroflow, {
-            callback: tracesData => {
-                const lineData = this.processData(tracesData as mendix.lib.MxObject[], object);
-                this.addTraces(lineData, count === index + 1);
+    private fetchByMicroflow(guid: string, seriesObject: serieConfig, count: number, index: number) {
+        mx.ui.action(seriesObject.dataSourceMicroflow, {
+            callback: mxObjects => {
+                const lineData = this.processData(mxObjects as mendix.lib.MxObject[], seriesObject);
+                this.addData(lineData, count === index + 1);
             },
             error: () => this.setState({
                 data: this.data
@@ -120,18 +120,21 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         });
     }
 
-    private processData(tracesData: mendix.lib.MxObject[], object: traceConfig): ScatterData {
-        const fetchedData = tracesData.map(value => {
+    private processData(seriesData: mendix.lib.MxObject[], seriesObject: serieConfig): ScatterData {
+        const fetchedData = seriesData.map(value => {
             return {
-                x: parseInt(value.get(object.xAttribute) as string, 10) as Datum,
-                y: parseInt(value.get(object.yAttribute) as string, 10) as Datum
+                x: parseInt(value.get(seriesObject.xAttribute) as string, 10) as Datum,
+                y: parseInt(value.get(seriesObject.yAttribute) as string, 10) as Datum
             };
         });
 
         const lineData: ScatterData = {
             connectgaps: true,
-            mode: object.mode.replace("o", "+") as Mode,
-            name: object.traceName,
+            line: {
+                color: seriesObject.lineColor
+            },
+            mode: seriesObject.mode.replace("o", "+") as Mode,
+            name: seriesObject.name,
             type: "scatter",
             x: fetchedData.map(value => value.x),
             y: fetchedData.map(value => value.y)
@@ -140,8 +143,8 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         return lineData;
     }
 
-    private addTraces(trace: ScatterData, isFinal = false) {
-        this.data.push(trace);
+    private addData(seriesData: ScatterData, isFinal = false) {
+        this.data.push(seriesData);
         if (isFinal) {
             this.setState({ data: this.data });
         }

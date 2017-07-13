@@ -2,18 +2,17 @@ export default ModelProps;
 
 export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines" | "text+lines+markers" | "none";
 export interface ModelProps {
-    traceConfigs: traceConfig[];
+    seriesConfig: serieConfig[];
     width: number;
     height: number;
     title?: string;
     showGrid: boolean;
-    showLegend: boolean;
     xAxisLabel: string;
     yAxisLabel: string;
 }
 
-export interface traceConfig {
-     traceName: string;
+export interface serieConfig {
+     name: string;
      entity: string;
      sourceType: "xpath" | "microflow";
      entityConstraint: string;
@@ -21,4 +20,5 @@ export interface traceConfig {
      xAttribute: string;
      yAttribute: string;
      mode: Mode
+     lineColor: string;
  }
