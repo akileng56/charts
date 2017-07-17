@@ -38,12 +38,14 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
             return createElement(Alert, { message: this.state.alertMessage });
         }
         return createElement(LineChart, {
+            className: this.props.class,
             data: this.state.data,
+            height: this.props.height,
+            heightUnit: this.props.heightUnit,
             layout: {
-                height: this.props.height,
+                autosize: true,
                 showlegend: true,
                 title: this.props.title,
-                width: this.props.width,
                 xaxis: {
                     showgrid: this.props.showGrid,
                     title: this.props.xAxisLabel
@@ -53,13 +55,40 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
                     title: this.props.yAxisLabel
                 }
             },
-            mxObject: this.props.mxObject
+            mxObject: this.props.mxObject,
+            style: LineChartContainer.parseStyle(this.props.style),
+            width: this.props.width,
+            widthUnit: this.props.widthUnit
         });
     }
 
     componentWillReceiveProps(newProps: LineChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
         this.fetchData(newProps.mxObject);
+    }
+
+    componentWillUnmount() {
+        if (this.subscriptionHandles) {
+            this.subscriptionHandles.forEach(mx.data.unsubscribe);
+        }
+    }
+
+    public static parseStyle(style = ""): {[key: string]: string} {
+        try {
+            return style.split(";").reduce<{[key: string]: string}>((styleObject, line) => {
+                const pair = line.split(":");
+                if (pair.length === 2) {
+                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
+                    styleObject[name] = pair[1].trim();
+                }
+                return styleObject;
+            }, {});
+        } catch (error) {
+            // tslint:disable-next-line no-console
+            console.log("Failed to parse style", style, error);
+        }
+
+        return {};
     }
 
     public static validateProps(props: LineChartContainerProps): string {
