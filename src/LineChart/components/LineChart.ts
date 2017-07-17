@@ -1,5 +1,9 @@
 import { Component, DOM } from "react";
+
+import * as classNames from "classnames";
 import { LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
+
+import "../ui/LineChart.css";
 
 declare function require(name: string): string;
 
@@ -7,6 +11,12 @@ interface LineChartProps {
     mxObject?: mendix.lib.MxObject;
     data?: ScatterData[];
     layout?: Partial<LineLayout>;
+    width: number;
+    widthUnit: string;
+    height: number;
+    heightUnit: string;
+    className?: string;
+    style?: object;
 }
 
 class LineChart extends Component<LineChartProps, {}> {
@@ -32,7 +42,15 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     render() {
-        return DOM.div({ className: "widget-line-chart", ref: this.getPlotlyNodeRef });
+        return DOM.div({
+            className: classNames("widget-line-chart", this.props.className),
+            ref: this.getPlotlyNodeRef,
+            style: {
+                ...this.props.style,
+                height: this.getStyle(this.props.height, this.props.heightUnit),
+                width: this.getStyle(this.props.width, this.props.widthUnit)
+            }
+        });
     }
 
     componentDidMount() {
@@ -55,6 +73,17 @@ class LineChart extends Component<LineChartProps, {}> {
                 this.Plotly.purge(this.lineChart);
             }
         }
+    }
+
+    private getStyle(value: string | number, type: string): number | string {
+        // when type is auto default browser styles applies
+        if (type === "pixels") {
+            return value;
+        } else if (type === "percentage") {
+            return value + "%";
+        }
+
+        return "";
     }
 }
 

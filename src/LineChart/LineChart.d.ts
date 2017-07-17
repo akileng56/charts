@@ -10,6 +10,8 @@ export interface ModelProps {
     showGrid: boolean;
     xAxisLabel: string;
     yAxisLabel: string;
+    widthUnit: "percentage" | "pixels";
+    heightUnit: "percentage" | "pixels" | "auto";
 }
 
 export interface SerieConfig {
