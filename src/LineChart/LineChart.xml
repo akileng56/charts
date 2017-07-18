@@ -98,11 +98,27 @@
             <category>Appearance</category>
             <description>Chart grids</description>
         </property>
+        <property key="showToolBar" type="boolean" defaultValue="true">
+            <caption>Show toolbar</caption>
+            <category>Appearance</category>
+            <description>Chart toolbar</description>
+        </property>
+        <property key="showLegend" type="boolean" defaultValue="true">
+            <caption>Show legend</caption>
+            <category>Appearance</category>
+            <description>Chart Legend</description>
+        </property>
+        <property key="responsive" type="boolean" defaultValue="true">
+            <caption>Responsive</caption>
+            <category>Appearance</category>
+            <description/>
+        </property>
         <property key="widthUnit" type="enumeration" defaultValue="percentage">
             <caption>Width unit</caption>
             <category>Appearance</category>
             <description/>
             <enumerationValues>
+                <enumerationValue key="auto">Auto</enumerationValue>
                 <enumerationValue key="percentage">Percentage</enumerationValue>
                 <enumerationValue key="pixels">Pixels</enumerationValue>
             </enumerationValues>

@@ -1,7 +1,7 @@
 import { Component, DOM } from "react";
 
 import * as classNames from "classnames";
-import { LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
+import { Config, LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
 
 import "../ui/LineChart.css";
 
@@ -9,6 +9,7 @@ declare function require(name: string): string;
 
 interface LineChartProps {
     data?: ScatterData[];
+    config?: Partial<Config>;
     layout?: Partial<LineLayout>;
     width: number;
     widthUnit: string;
@@ -65,8 +66,9 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     private renderChart(data?: ScatterData[]) {
+        const { config, layout } = this.props;
         if (this.lineChart) {
-            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, this.props.layout);
+            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, layout, config);
         }
     }
 
