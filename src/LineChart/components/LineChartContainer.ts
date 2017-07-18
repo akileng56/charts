@@ -40,12 +40,15 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
             }
             return createElement(LineChart, {
                 className: this.props.class,
+                config: {
+                    displayModeBar: this.props.showToolBar
+                },
                 data: this.state.data,
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
                 layout: {
-                    autosize: true,
-                    showlegend: true,
+                    autosize: this.props.responsive,
+                    showlegend: this.props.showLegend,
                     title: this.props.title,
                     xaxis: {
                         showgrid: this.props.showGrid,

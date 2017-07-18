@@ -8,9 +8,12 @@ export interface ModelProps {
     height: number;
     title?: string;
     showGrid: boolean;
+    showToolBar: boolean;
+    showLegend: boolean;
+    responsive: boolean;
     xAxisLabel: string;
     yAxisLabel: string;
-    widthUnit: "percentage" | "pixels";
+    widthUnit: "percentage" | "pixels" | "auto";
     heightUnit: "percentage" | "pixels" | "auto";
 }
 
