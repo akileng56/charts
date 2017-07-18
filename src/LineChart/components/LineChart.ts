@@ -39,6 +39,7 @@ class LineChart extends Component<LineChartProps, {}> {
         this.Plotly = require("plotly.js/dist/plotly") as any;
 
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
+        this.onResize = this.onResize.bind(this);
     }
 
     render() {
@@ -55,10 +56,18 @@ class LineChart extends Component<LineChartProps, {}> {
 
     componentDidMount() {
         this.renderChart(this.props.data);
+        window.addEventListener("resize", this.onResize);
     }
 
     componentWillReceiveProps(newProps: LineChartProps) {
         this.renderChart(newProps.data);
+    }
+
+    componentWillUnmount() {
+        if (this.lineChart) {
+            this.Plotly.purge(this.lineChart);
+        }
+        window.removeEventListener("resize", this.onResize);
     }
 
     private getPlotlyNodeRef(node: HTMLDivElement) {
@@ -81,6 +90,10 @@ class LineChart extends Component<LineChartProps, {}> {
         }
 
         return "";
+    }
+
+    private onResize() {
+        this.Plotly.Plots.resize(this.lineChart);
     }
 }
 
