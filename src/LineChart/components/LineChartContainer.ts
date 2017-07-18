@@ -34,32 +34,35 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     }
 
     render() {
-        if (this.state.alertMessage) {
-            return createElement(Alert, { message: this.state.alertMessage });
-        }
-        return createElement(LineChart, {
-            className: this.props.class,
-            data: this.state.data,
-            height: this.props.height,
-            heightUnit: this.props.heightUnit,
-            layout: {
-                autosize: true,
-                showlegend: true,
-                title: this.props.title,
-                xaxis: {
-                    showgrid: this.props.showGrid,
-                    title: this.props.xAxisLabel
+        if (this.props.mxObject) {
+            if (this.state.alertMessage) {
+                return createElement(Alert, { message: this.state.alertMessage });
+            }
+            return createElement(LineChart, {
+                className: this.props.class,
+                data: this.state.data,
+                height: this.props.height,
+                heightUnit: this.props.heightUnit,
+                layout: {
+                    autosize: true,
+                    showlegend: true,
+                    title: this.props.title,
+                    xaxis: {
+                        showgrid: this.props.showGrid,
+                        title: this.props.xAxisLabel
+                    },
+                    yaxis: {
+                        showgrid: this.props.showGrid,
+                        title: this.props.yAxisLabel
+                    }
                 },
-                yaxis: {
-                    showgrid: this.props.showGrid,
-                    title: this.props.yAxisLabel
-                }
-            },
-            mxObject: this.props.mxObject,
-            style: LineChartContainer.parseStyle(this.props.style),
-            width: this.props.width,
-            widthUnit: this.props.widthUnit
-        });
+                style: LineChartContainer.parseStyle(this.props.style),
+                width: this.props.width,
+                widthUnit: this.props.widthUnit
+            });
+        } else {
+            return createElement("div", {});
+        }
     }
 
     componentWillReceiveProps(newProps: LineChartContainerProps) {
