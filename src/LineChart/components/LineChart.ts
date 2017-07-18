@@ -8,7 +8,6 @@ import "../ui/LineChart.css";
 declare function require(name: string): string;
 
 interface LineChartProps {
-    mxObject?: mendix.lib.MxObject;
     data?: ScatterData[];
     layout?: Partial<LineLayout>;
     width: number;
@@ -54,24 +53,20 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     componentDidMount() {
-        this.renderChart(this.props.data, this.props.mxObject);
+        this.renderChart(this.props.data);
     }
 
     componentWillReceiveProps(newProps: LineChartProps) {
-        this.renderChart(newProps.data, newProps.mxObject);
+        this.renderChart(newProps.data);
     }
 
     private getPlotlyNodeRef(node: HTMLDivElement) {
         this.lineChart = node;
     }
 
-    private renderChart(data?: ScatterData[], mxObject?: mendix.lib.MxObject) {
+    private renderChart(data?: ScatterData[]) {
         if (this.lineChart) {
-            if (mxObject) {
-                this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, this.props.layout);
-            } else {
-                this.Plotly.purge(this.lineChart);
-            }
+            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, this.props.layout);
         }
     }
 
