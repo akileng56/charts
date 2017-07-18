@@ -2,7 +2,7 @@ import { Component, createElement } from "react";
 
 import { Datum, ScatterData } from "plotly.js";
 import { LineChart } from "./LineChart";
-import { Mode, ModelProps, SerieConfig } from "../LineChart";
+import { Mode, ModelProps, serieConfig } from "../LineChart";
 import { Alert } from "./Alert";
 
 interface LineChartContainerProps extends ModelProps {
@@ -95,7 +95,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         let errorMessage = "";
         const incorrectObjectingNames = props.seriesConfig
             .filter(object => object.sourceType === "microflow" && !object.dataSourceMicroflow)
-            .map(incorrect => incorrect.traceName)
+            .map(incorrect => incorrect.name)
             .join(", ");
 
         if (incorrectObjectingNames) {
@@ -139,7 +139,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         }
     }
 
-    private fetchByXPath(seriesObject: SerieConfig, xpath: string, count: number, index: number) {
+    private fetchByXPath(seriesObject: serieConfig, xpath: string, count: number, index: number) {
         window.mx.data.get({
             callback: mxObjects => {
                 const lineData = this.processData(mxObjects, seriesObject);
@@ -157,7 +157,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         });
     }
 
-    private fetchByMicroflow(guid: string, seriesObject: SerieConfig, count: number, index: number) {
+    private fetchByMicroflow(guid: string, seriesObject: serieConfig, count: number, index: number) {
         const actionname = seriesObject.dataSourceMicroflow;
         mx.ui.action(actionname, {
             callback: mxObjects => {
@@ -175,7 +175,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         });
     }
 
-    private processData(seriesData: mendix.lib.MxObject[], seriesObject: SerieConfig): ScatterData {
+    private processData(seriesData: mendix.lib.MxObject[], seriesObject: serieConfig): ScatterData {
         const fetchedData = seriesData.map(value => {
             return {
                 x: parseInt(value.get(seriesObject.xAttribute) as string, 10) as Datum,
