@@ -14,7 +14,7 @@ export interface ModelProps {
     heightUnit: "percentage" | "pixels" | "auto";
 }
 
-export interface SerieConfig {
+export interface serieConfig {
      name: string;
      entity: string;
      sourceType: "xpath" | "microflow";
