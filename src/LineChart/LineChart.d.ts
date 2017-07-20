@@ -3,7 +3,7 @@ export default ModelProps;
 
 export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines"| "text+lines+markers" | "none";
 export interface ModelProps {
-    seriesConfig: serieConfig[];
+    seriesConfig: SerieConfig[];
     width: number;
     height: number;
     title?: string;
@@ -17,7 +17,7 @@ export interface ModelProps {
     heightUnit: "percentage" | "pixels" | "auto";
 }
 
-export interface serieConfig {
+export interface SerieConfig {
      name: string;
      entity: string;
      sourceType: "xpath" | "microflow";
