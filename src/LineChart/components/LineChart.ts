@@ -55,12 +55,17 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     componentDidMount() {
-        this.renderChart(this.props.data);
-        window.addEventListener("resize", this.onResize);
+        const iFrame = this.getIframe();
+        this.renderChart(this.props);
+        if (iFrame) {
+            iFrame.contentWindow.addEventListener("resize", this.onResize);
+        } else {
+            window.addEventListener("resize", this.onResize);
+        }
     }
 
     componentWillReceiveProps(newProps: LineChartProps) {
-        this.renderChart(newProps.data);
+        this.renderChart(newProps);
     }
 
     componentWillUnmount() {
@@ -74,8 +79,12 @@ class LineChart extends Component<LineChartProps, {}> {
         this.lineChart = node;
     }
 
-    private renderChart(data?: ScatterData[]) {
-        const { config, layout } = this.props;
+    private getIframe(): HTMLIFrameElement {
+        return document.getElementsByClassName("t-page-editor-iframe")[0] as HTMLIFrameElement;
+    }
+
+    private renderChart(props: LineChartProps) {
+        const { data, config, layout } = props;
         if (this.lineChart) {
             this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, layout, config);
         }
