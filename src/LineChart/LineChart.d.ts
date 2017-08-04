@@ -6,15 +6,14 @@ export interface ModelProps {
     seriesConfig: SerieConfig[];
     width: number;
     height: number;
-    title?: string;
     showGrid: boolean;
     showToolBar: boolean;
     showLegend: boolean;
     responsive: boolean;
     xAxisLabel: string;
     yAxisLabel: string;
-    widthUnit: "percentage" | "pixels" | "auto";
-    heightUnit: "percentage" | "pixels" | "auto";
+    widthUnit: "percentage" | "pixels";
+    heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
 }
 
 export interface SerieConfig {

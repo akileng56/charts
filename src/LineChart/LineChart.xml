@@ -88,25 +88,20 @@
             <category>Y-axis</category>
             <description>Label for the y-axis (vertical)</description>
         </property>
-        <property key="title" type="string" required="false">
-            <caption>Chart title</caption>
-            <category>Appearance</category>
-            <description>Chart title</description>
-        </property>
         <property key="showGrid" type="boolean" defaultValue="true">
             <caption>Show grids</caption>
             <category>Appearance</category>
-            <description>Chart grids</description>
+            <description/>
         </property>
-        <property key="showToolBar" type="boolean" defaultValue="true">
+        <property key="showToolBar" type="boolean" defaultValue="false">
             <caption>Show toolbar</caption>
             <category>Appearance</category>
-            <description>Chart toolbar</description>
+            <description/>
         </property>
         <property key="showLegend" type="boolean" defaultValue="true">
             <caption>Show legend</caption>
             <category>Appearance</category>
-            <description>Chart Legend</description>
+            <description/>
         </property>
         <property key="responsive" type="boolean" defaultValue="true">
             <caption>Responsive</caption>
@@ -118,7 +113,6 @@
             <category>Appearance</category>
             <description/>
             <enumerationValues>
-                <enumerationValue key="auto">Auto</enumerationValue>
                 <enumerationValue key="percentage">Percentage</enumerationValue>
                 <enumerationValue key="pixels">Pixels</enumerationValue>
             </enumerationValues>
@@ -128,14 +122,14 @@
             <category>Appearance</category>
             <description>Width of the chart</description>
         </property>
-        <property key="heightUnit" type="enumeration" defaultValue="auto">
+        <property key="heightUnit" type="enumeration" defaultValue="percentageOfWidth">
             <caption>Height unit</caption>
             <category>Appearance</category>
-            <description/>
+            <description>'Percentage of width' is the aspect ratio, 'Pixels' is absolute. Warning: the 'Percentage of parent' only works when the parent has an absolute height, else it will not display</description>
             <enumerationValues>
-                <enumerationValue key="auto">Auto</enumerationValue>
+                <enumerationValue key="percentageOfWidth">Percentage of width</enumerationValue>
                 <enumerationValue key="pixels">Pixels</enumerationValue>
-                <enumerationValue key="percentage">Percentage</enumerationValue>
+                <enumerationValue key="percentageOfParent">Percentage of parent</enumerationValue>
             </enumerationValues>
         </property>
         <property key="height" type="integer" defaultValue="100">
