@@ -44,7 +44,6 @@ export class preview extends Component<LineChartContainerProps, {}> {
                 layout: {
                     autosize: this.props.responsive,
                     showlegend: this.props.showLegend,
-                    title: this.props.title,
                     xaxis: {
                         showgrid: this.props.showGrid,
                         title: this.props.xAxisLabel
@@ -70,12 +69,6 @@ export function getPreviewCss() {
 }
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
-    if (valueMap.heightUnit === "auto") {
-        visibilityMap.height = false;
-    }
-    if (valueMap.widthUnit === "auto") {
-        visibilityMap.width = false;
-    }
     valueMap.seriesConfig.forEach((config: SerieConfig, index: number) => {
         if (config.sourceType === "xpath") {
             visibilityMap.seriesConfig[index].entityConstraint = true;

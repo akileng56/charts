@@ -49,7 +49,6 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
                 layout: {
                     autosize: this.props.responsive,
                     showlegend: this.props.showLegend,
-                    title: this.props.title,
                     xaxis: {
                         showgrid: this.props.showGrid,
                         title: this.props.xAxisLabel

@@ -1,4 +1,4 @@
-import { Component, DOM } from "react";
+import { Component, createElement } from "react";
 
 import * as classNames from "classnames";
 import { Config, LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
@@ -43,25 +43,20 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     render() {
-        return DOM.div({
+        return createElement("div", {
             className: classNames("widget-line-chart", this.props.className),
             ref: this.getPlotlyNodeRef,
             style: {
                 ...this.props.style,
-                height: this.getStyle(this.props.height, this.props.heightUnit),
-                width: this.getStyle(this.props.width, this.props.widthUnit)
+                ...this.getStyle()
             }
         });
     }
 
     componentDidMount() {
-        const iFrame = this.getIframe();
         this.renderChart(this.props);
-        if (iFrame) {
-            iFrame.contentWindow.addEventListener("resize", this.onResize);
-        } else {
-            window.addEventListener("resize", this.onResize);
-        }
+        this.setUpEvents();
+        this.adjustStyle();
     }
 
     componentWillReceiveProps(newProps: LineChartProps) {
@@ -79,6 +74,28 @@ class LineChart extends Component<LineChartProps, {}> {
         this.lineChart = node;
     }
 
+    private adjustStyle() {
+        if (this.lineChart) {
+            const wrapperElement = this.lineChart.parentElement;
+            if (this.props.heightUnit === "percentageOfParent" && wrapperElement) {
+                wrapperElement.style.height = "100%";
+                wrapperElement.style.width = "100%";
+            }
+        }
+    }
+
+    private setUpEvents() {
+        // A workaround for attaching the resize event to the Iframe window because the plotly
+        // library does not support it. This fix will be done in the web modeler preview class when the
+        // plotly library starts supporting listening to Iframe events.
+        const iFrame = this.getIframe();
+        if (iFrame) {
+            iFrame.contentWindow.addEventListener("resize", this.onResize);
+        } else {
+            window.addEventListener("resize", this.onResize);
+        }
+    }
+
     private getIframe(): HTMLIFrameElement {
         return document.getElementsByClassName("t-page-editor-iframe")[0] as HTMLIFrameElement;
     }
@@ -90,15 +107,18 @@ class LineChart extends Component<LineChartProps, {}> {
         }
     }
 
-    private getStyle(value: string | number, type: string): number | string {
-        // when type is auto default browser styles applies
-        if (type === "pixels") {
-            return value;
-        } else if (type === "percentage") {
-            return value + "%";
+    private getStyle(): object {
+        const style: { paddingBottom?: string; width: string, height?: string } = {
+            width: this.props.widthUnit === "percentage" ? `${this.props.width}%` : `${this.props.width}`
+        };
+        if (this.props.heightUnit === "percentageOfWidth") {
+            style.paddingBottom = `${this.props.height}%`;
+        } else if (this.props.heightUnit === "pixels") {
+            style.paddingBottom = `${this.props.height}`;
+        } else if (this.props.heightUnit === "percentageOfParent") {
+            style.height = `${this.props.height}%`;
         }
-
-        return "";
+        return style;
     }
 
     private onResize() {
