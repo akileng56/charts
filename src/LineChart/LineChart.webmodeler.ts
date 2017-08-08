@@ -2,21 +2,14 @@ import { Component, createElement } from "react";
 
 import { ScatterData } from "plotly.js";
 import { LineChart } from "./components/LineChart";
-import { SerieConfig } from "./LineChart";
 import LineChartContainer, { LineChartContainerProps } from "./components/LineChartContainer";
 import { Alert } from "./components/Alert";
 
 declare function require(name: string): string;
 
-type SerieConfigVisibility = {
-    [P in keyof SerieConfig]: boolean;
+type VisibilityMap = {
+    [P in keyof LineChartContainerProps]: boolean;
 };
-
-interface VisibilityMap {
-    height: boolean;
-    seriesConfig: SerieConfigVisibility[];
-    width: boolean;
-}
 
 // tslint:disable-next-line class-name
 export class preview extends Component<LineChartContainerProps, {}> {
@@ -69,15 +62,13 @@ export function getPreviewCss() {
 }
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
-    valueMap.seriesConfig.forEach((config: SerieConfig, index: number) => {
-        if (config.sourceType === "xpath") {
-            visibilityMap.seriesConfig[index].entityConstraint = true;
-            visibilityMap.seriesConfig[index].dataSourceMicroflow = false;
-        } else if (config.sourceType === "microflow") {
-            visibilityMap.seriesConfig[index].entityConstraint = false;
-            visibilityMap.seriesConfig[index].dataSourceMicroflow = true;
-        }
-    });
+    if (valueMap.sourceType === "xpath") {
+        visibilityMap.entityConstraint = true;
+        visibilityMap.dataSourceMicroflow = false;
+    } else if (valueMap.sourceType === "microflow") {
+        visibilityMap.entityConstraint = false;
+        visibilityMap.dataSourceMicroflow = true;
+    }
 
     return visibilityMap;
 }
