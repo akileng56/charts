@@ -4,79 +4,74 @@
     <description>Create line chart</description>
     <icon/>
     <properties>
-        <property key="seriesConfig" type="object" isList="true" required="false">
-            <caption>Series</caption>
+        <property key="seriesEntity" type="entity" isPath="yes" pathType="referenceSet">
+            <caption>Series entity</caption>
             <category>Data source</category>
-            <description>Add a serie and configure its properties</description>
-            <properties>
-                <property key="name" type="string">
-                    <caption>Name</caption>
-                    <category>Data source</category>
-                    <description>Used in the legend</description>
-                </property>
-                <property key="entity" type="entity" pathType="reference" isPath="optional">
-                    <caption>Data entity</caption>
-                    <category>Data source</category>
-                    <description>The entity containing points to plot</description>
-                </property>
-                <property key="sourceType" type="enumeration" defaultValue="xpath">
-                    <caption>Source</caption>
-                    <category>Data source</category>
-                    <description>Type of source</description>
-                    <enumerationValues>
-                        <enumerationValue key="xpath">Database</enumerationValue>
-                        <enumerationValue key="microflow">Microflow</enumerationValue>
-                    </enumerationValues>
-                </property>
-                <property key="entityConstraint" type="entityConstraint" entityProperty="entity" required="false">
-                    <caption>Source XPath Constraint</caption>
-                    <category>Data source</category>
-                    <description>Constraint on the data from the data entity</description>
-                </property>
-                <property key="dataSourceMicroflow" type="microflow" required="false">
-                    <caption>Source microflow</caption>
-                    <category>Data source</category>
-                    <description>Returns a lines' coordinates</description>
-                    <returnType type="Object" entityProperty="entity" isList="true"/>
-                </property>
-                <property key="xAttribute" type="attribute" entityProperty="entity">
-                    <caption>X-axis data attribute</caption>
-                    <category>Data source</category>
-                    <description>Attribute containing x-axis dates</description>
-                    <attributeTypes>
-                        <attributeType name="DateTime"/>
-                        <attributeType name="Decimal"/>
-                        <attributeType name="Long"/>
-                        <attributeType name="Integer"/>
-                        <attributeType name="String"/>
-                    </attributeTypes>
-                </property>
-                <property key="yAttribute" type="attribute" entityProperty="entity">
-                    <caption>Y-axis data attribute</caption>
-                    <category>Data source</category>
-                    <description>Attribute containing y-axis data</description>
-                    <attributeTypes>
-                        <attributeType name="Decimal"/>
-                        <attributeType name="Long"/>
-                        <attributeType name="Integer"/>
-                    </attributeTypes>
-                </property>
-                <property key="mode" type="enumeration" defaultValue="linesomarkers">
-                    <caption>Mode</caption>
-                    <category>Appearance</category>
-                    <description></description>
-                        <enumerationValues>
-                            <enumerationValue key="lines">Lines</enumerationValue>
-                            <enumerationValue key="markers">Markers</enumerationValue>
-                            <enumerationValue key="linesomarkers">Lines with Markers</enumerationValue>
-                        </enumerationValues>
-                </property>
-                <property key="lineColor" type="string" required="false">
-                    <caption>Line color</caption>
-                    <category>Appearance</category>
-                    <description>Line color</description>
-                </property>
-            </properties>
+            <description>Series entity</description>
+        </property>
+        <property key="seriesNameAttribute" type="attribute" entityProperty="seriesEntity">
+            <caption>Series name attribute</caption>
+            <category>Data source</category>
+            <description>Series name attribute</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
+        <property key="dataEntity" type="entity" isPath="yes" pathType="referenceSet" entityProperty="seriesEntity">
+            <caption>Data entity</caption>
+            <category>Data source</category>
+            <description>Data entity</description>
+        </property>
+        <property key="sourceType" type="enumeration" defaultValue="xpath">
+            <caption>Source</caption>
+            <category>Data source</category>
+            <description>Type of source</description>
+            <enumerationValues>
+                <enumerationValue key="xpath">Database</enumerationValue>
+                <enumerationValue key="microflow">Microflow</enumerationValue>
+            </enumerationValues>
+        </property>
+        <property key="entityConstraint" type="entityConstraint" entityProperty="seriesEntity" required="false">
+            <caption>Source XPath Constraint</caption>
+            <category>Data source</category>
+            <description>Constraint on the data from the data entity</description>
+        </property>
+        <property key="dataSourceMicroflow" type="microflow" required="false">
+            <caption>Source microflow</caption>
+            <category>Data source</category>
+            <description>Returns a lines' coordinates</description>
+            <returnType type="Object" entityProperty="seriesEntity" isList="true"/>
+        </property>
+        <property key="xValueAttribute" type="attribute" entityProperty="dataEntity">
+            <caption>X value attribute</caption>
+            <category>Data source</category>
+            <description>X value attribute</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
+        <property key="yValueAttribute" type="attribute" entityProperty="dataEntity">
+            <caption>Y value attribute</caption>
+            <category>Data source</category>
+            <description>Y value attribute</description>
+            <attributeTypes>
+                <attributeType name="Integer"/>
+                <attributeType name="Decimal"/>
+                <attributeType name="Long"/>
+            </attributeTypes>
+        </property>
+        <property key="xAxisSortAttribute" type="attribute" entityProperty="dataEntity">
+            <caption>X-axis sort attribute</caption>
+            <category>Data source</category>
+            <description>Attribute to use for sorting the x-axis data</description>
+            <attributeTypes>
+                <attributeType name="Decimal"/>
+                <attributeType name="Long"/>
+                <attributeType name="Integer"/>
+                <attributeType name="String"/>
+                <attributeType name="AutoNumber"/>
+                <attributeType name="DateTime"/>
+            </attributeTypes>
         </property>
         <property key="xAxisLabel" type="string" required="false">
             <caption>X-axis label</caption>
@@ -87,6 +82,24 @@
             <caption>Y-axis label</caption>
             <category>Y-axis</category>
             <description>Label for the y-axis (vertical)</description>
+        </property>
+        <property key="mode" type="enumeration" defaultValue="linesomarkers">
+            <caption>Mode</caption>
+            <category>Appearance</category>
+            <description></description>
+                <enumerationValues>
+                    <enumerationValue key="lines">Lines</enumerationValue>
+                    <enumerationValue key="markers">Markers</enumerationValue>
+                    <enumerationValue key="linesomarkers">Lines with Markers</enumerationValue>
+                </enumerationValues>
+        </property>
+        <property key="lineColor" type="attribute" entityProperty="seriesEntity" required="false">
+            <caption>Line color attribute</caption>
+            <category>Appearance</category>
+            <description>Line color</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
         </property>
         <property key="showGrid" type="boolean" defaultValue="true">
             <caption>Show grids</caption>
