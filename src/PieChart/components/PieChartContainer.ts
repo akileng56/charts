@@ -1,9 +1,15 @@
 import { Component, createElement } from "react";
 
-class PieChartContainer extends Component<{}, {}> {
-    render() {
-        return createElement("div", {}, "Pie Chart");
-    }
+import { PieChart } from "./PieChart";
+
+interface PieChartContainerProps {
+    chartType: ChartType;
 }
 
-export { PieChartContainer as default };
+export type ChartType = "pie" | "donut";
+
+export default class PieChartContainer extends Component<PieChartContainerProps, {}> {
+    render() {
+        return createElement(PieChart, { type: this.props.chartType });
+    }
+}
