@@ -62,10 +62,10 @@ export function getPreviewCss() {
 }
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
-    if (valueMap.sourceType === "xpath") {
+    if (valueMap.dataSourceType === "xpath") {
         visibilityMap.entityConstraint = true;
         visibilityMap.dataSourceMicroflow = false;
-    } else if (valueMap.sourceType === "microflow") {
+    } else if (valueMap.dataSourceType === "microflow") {
         visibilityMap.entityConstraint = false;
         visibilityMap.dataSourceMicroflow = true;
     }
