@@ -106,7 +106,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
 
     public static validateProps(props: LineChartContainerProps): string {
         let errorMessage = "";
-        if (props.sourceType === "microflow" && !props.dataSourceMicroflow) {
+        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
             errorMessage += ` data source type is set to 'Microflow' but 'Source microflow' is missing \n`;
         }
 
@@ -132,7 +132,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     private fetchData(mxObject?: mendix.lib.MxObject) {
         const { seriesEntity } = this.props;
         if (mxObject && this.props.seriesEntity) {
-            if (this.props.sourceType === "xpath") {
+            if (this.props.dataSourceType === "xpath") {
                 const constraint = this.props.entityConstraint
                     ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
                     : "";
@@ -141,7 +141,7 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
                     : seriesEntity;
                 const XPath = "//" + entityName + constraint;
                 this.fetchByXPath(XPath);
-            } else if (this.props.sourceType === "microflow" && this.props.dataSourceMicroflow) {
+            } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
                 this.fetchByMicroflow(mxObject.getGuid());
             }
 

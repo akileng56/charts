@@ -4,15 +4,15 @@
     <description>Create line chart</description>
     <icon/>
     <properties>
-        <property key="seriesEntity" type="entity" isPath="yes" pathType="referenceSet">
+        <property key="seriesEntity" type="entity" isPath="optional" pathType="referenceSet">
             <caption>Series entity</caption>
             <category>Data source</category>
-            <description>Series entity</description>
+            <description>The entity from which the series will be retrieved</description>
         </property>
         <property key="seriesNameAttribute" type="attribute" entityProperty="seriesEntity">
             <caption>Series name attribute</caption>
             <category>Data source</category>
-            <description>Series name attribute</description>
+            <description>Attribute that holds the name of the series</description>
             <attributeTypes>
                 <attributeType name="String"/>
             </attributeTypes>
@@ -20,32 +20,32 @@
         <property key="dataEntity" type="entity" isPath="yes" pathType="referenceSet" entityProperty="seriesEntity">
             <caption>Data entity</caption>
             <category>Data source</category>
-            <description>Data entity</description>
+            <description>The entity from which the data values will be retrieved</description>
         </property>
-        <property key="sourceType" type="enumeration" defaultValue="xpath">
-            <caption>Source</caption>
+        <property key="dataSourceType" type="enumeration" defaultValue="xpath">
+            <caption>Data Source</caption>
             <category>Data source</category>
-            <description>Type of source</description>
+            <description/>
             <enumerationValues>
-                <enumerationValue key="xpath">Database</enumerationValue>
+                <enumerationValue key="xpath">Database/XPath</enumerationValue>
                 <enumerationValue key="microflow">Microflow</enumerationValue>
             </enumerationValues>
         </property>
         <property key="entityConstraint" type="entityConstraint" entityProperty="seriesEntity" required="false">
-            <caption>Source XPath Constraint</caption>
+            <caption>XPath constraint</caption>
             <category>Data source</category>
-            <description>Constraint on the data from the data entity</description>
+            <description>Constraint on the data from the data entity (used when data soucre is Database/XPath)</description>
         </property>
         <property key="dataSourceMicroflow" type="microflow" required="false">
-            <caption>Source microflow</caption>
+            <caption>Microflow</caption>
             <category>Data source</category>
-            <description>Returns a lines' coordinates</description>
+            <description>Returns the series</description>
             <returnType type="Object" entityProperty="seriesEntity" isList="true"/>
         </property>
         <property key="xValueAttribute" type="attribute" entityProperty="dataEntity">
             <caption>X value attribute</caption>
             <category>Data source</category>
-            <description>X value attribute</description>
+            <description>Attribute containing x-axis value</description>
             <attributeTypes>
                 <attributeType name="String"/>
             </attributeTypes>
@@ -53,7 +53,7 @@
         <property key="yValueAttribute" type="attribute" entityProperty="dataEntity">
             <caption>Y value attribute</caption>
             <category>Data source</category>
-            <description>Y value attribute</description>
+            <description>Attribute containing y-axis value</description>
             <attributeTypes>
                 <attributeType name="Integer"/>
                 <attributeType name="Decimal"/>
@@ -96,13 +96,13 @@
         <property key="lineColor" type="attribute" entityProperty="seriesEntity" required="false">
             <caption>Line color attribute</caption>
             <category>Appearance</category>
-            <description>Line color</description>
+            <description/>
             <attributeTypes>
                 <attributeType name="String"/>
             </attributeTypes>
         </property>
         <property key="showGrid" type="boolean" defaultValue="true">
-            <caption>Show grids</caption>
+            <caption>Show grid</caption>
             <category>Appearance</category>
             <description/>
         </property>

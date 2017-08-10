@@ -1,4 +1,4 @@
-/* tslint:disable */
+// tslint:disable-next-line
 export default ModelProps;
 
 export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines"| "text+lines+markers" | "none";
@@ -6,13 +6,13 @@ export interface ModelProps {
     seriesEntity: string;
     seriesNameAttribute: string;
     dataEntity: string;
-    sourceType: "xpath" | "microflow";
+    dataSourceType: "xpath" | "microflow";
     entityConstraint: string;
     dataSourceMicroflow: string;
     xValueAttribute: string;
     yValueAttribute: string;
     xAxisSortAttribute: string;
-    mode: Mode;
+    mode: "lines" | "markers" | "text" | "linesomarkers";
     lineColor: string;
     width: number;
     height: number;
