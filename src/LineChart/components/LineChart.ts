@@ -1,9 +1,6 @@
 import { Component, createElement } from "react";
-
 import * as classNames from "classnames";
 import { Config, LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
-
-import "../ui/LineChart.css";
 
 declare function require(name: string): string;
 
@@ -37,7 +34,6 @@ class LineChart extends Component<LineChartProps, {}> {
         super(props);
 
         this.Plotly = require("plotly.js/dist/plotly") as any;
-
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -47,8 +43,8 @@ class LineChart extends Component<LineChartProps, {}> {
             className: classNames("widget-line-chart", this.props.className),
             ref: this.getPlotlyNodeRef,
             style: {
-                ...this.props.style,
-                ...this.getStyle()
+                ...this.getStyle(),
+                ...this.props.style
             }
         });
     }
@@ -88,16 +84,12 @@ class LineChart extends Component<LineChartProps, {}> {
         // A workaround for attaching the resize event to the Iframe window because the plotly
         // library does not support it. This fix will be done in the web modeler preview class when the
         // plotly library starts supporting listening to Iframe events.
-        const iFrame = this.getIframe();
+        const iFrame = document.getElementsByClassName("t-page-editor-iframe")[0] as HTMLIFrameElement;
         if (iFrame) {
-            iFrame.contentWindow.addEventListener("resize", this.onResize);
+            (iFrame.contentWindow || iFrame.contentDocument).addEventListener("resize", this.onResize);
         } else {
             window.addEventListener("resize", this.onResize);
         }
-    }
-
-    private getIframe(): HTMLIFrameElement {
-        return document.getElementsByClassName("t-page-editor-iframe")[0] as HTMLIFrameElement;
     }
 
     private renderChart(props: LineChartProps) {
