@@ -3,7 +3,7 @@ import { Component, createElement } from "react";
 import { ScatterData } from "plotly.js";
 import { LineChart } from "./components/LineChart";
 import LineChartContainer, { LineChartContainerProps } from "./components/LineChartContainer";
-import { Alert } from "./components/Alert";
+import { Alert } from "../components/Alert";
 
 declare function require(name: string): string;
 
@@ -25,7 +25,10 @@ export class preview extends Component<LineChartContainerProps, {}> {
 
     render() {
         return createElement("div", {},
-            createElement(Alert, { message: LineChartContainer.validateProps(this.props) }),
+            createElement(Alert, {
+                className: "widget-line-chart-alert",
+                message: LineChartContainer.validateProps(this.props)
+            }),
             createElement(LineChart, {
                 config: {
                     displayModeBar: this.props.showToolBar,
@@ -55,10 +58,7 @@ export class preview extends Component<LineChartContainerProps, {}> {
 }
 
 export function getPreviewCss() {
-    return (
-        require("./ui/LineChart.css") +
-        require("plotly.js/src/css/style.scss")
-    );
+    return require("plotly.js/src/css/style.scss");
 }
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
