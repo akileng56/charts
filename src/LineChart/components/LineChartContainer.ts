@@ -1,11 +1,11 @@
 import { Component, createElement } from "react";
 
 import { Datum, ScatterData } from "plotly.js";
+import { Alert } from "./../../components/Alert";
 import { LineChart } from "./LineChart";
 import { Mode, ModelProps } from "../LineChart";
-import { Alert } from "./Alert";
 
-interface LineChartContainerProps extends ModelProps {
+export interface LineChartContainerProps extends ModelProps {
     class?: string;
     mxform: mxui.lib.form._FormBase;
     mxObject?: mendix.lib.MxObject;
@@ -18,15 +18,7 @@ interface LineChartContainerState {
     data?: ScatterData[];
 }
 
-interface DataProps {
-    seriesName: string;
-    lineColor: string;
-    index: number;
-    count: number;
-    guid?: string;
-}
-
-class LineChartContainer extends Component<LineChartContainerProps, LineChartContainerState> {
+export default class LineChartContainer extends Component<LineChartContainerProps, LineChartContainerState> {
     private subscriptionHandles: number[] = [];
     private data: ScatterData[] = [];
 
@@ -38,13 +30,12 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
             data: []
         };
         this.fetchData = this.fetchData.bind(this);
-        this.handleSubscription = this.handleSubscription.bind(this);
     }
 
     render() {
         if (this.props.mxObject) {
             if (this.state.alertMessage) {
-                return createElement(Alert, { message: this.state.alertMessage });
+                return createElement(Alert, { className: "widget-line-chart-alert", message: this.state.alertMessage });
             }
             return createElement(LineChart, {
                 className: this.props.class,
@@ -70,9 +61,9 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
                 width: this.props.width,
                 widthUnit: this.props.widthUnit
             });
-        } else {
-            return createElement("div", {});
         }
+
+        return null;
     }
 
     componentWillReceiveProps(newProps: LineChartContainerProps) {
@@ -119,42 +110,37 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
 
         if (mxObject) {
             this.subscriptionHandles.push(mx.data.subscribe({
-                callback: this.handleSubscription,
+                callback: () => this.fetchData(mxObject),
                 guid: mxObject.getGuid()
             }));
         }
     }
 
-    private handleSubscription() {
-        this.fetchData(this.props.mxObject);
-    }
-
     private fetchData(mxObject?: mendix.lib.MxObject) {
-        const { seriesEntity } = this.props;
         if (mxObject && this.props.seriesEntity) {
             if (this.props.dataSourceType === "xpath") {
-                const constraint = this.props.entityConstraint
-                    ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
-                    : "";
-                const entityName = seriesEntity.indexOf("/") > -1
-                    ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
-                    : seriesEntity;
-                const XPath = "//" + entityName + constraint;
-                this.fetchByXPath(XPath);
+                this.fetchByXPath(mxObject);
             } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
                 this.fetchByMicroflow(mxObject.getGuid());
             }
-
         }
     }
 
-    private fetchByXPath(xpath: string) {
+    private fetchByXPath(mxObject: mendix.lib.MxObject) {
+        const { seriesEntity } = this.props;
+        const constraint = this.props.entityConstraint
+            ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
+            : "";
+        const entityName = seriesEntity.indexOf("/") > -1
+            ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
+            : seriesEntity;
+        const xpath = "//" + entityName + constraint;
         window.mx.data.get({
             callback: mxObjects => this.fetchDataFromSeries(mxObjects),
-            error: error => this.setState({
-                alertMessage: `An error occurred while retrieving data via XPath (${xpath}): ${error}`,
-                data: []
-            }),
+            error: error => {
+                mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
+                this.setState({ data: [] });
+            },
             xpath
         });
     }
@@ -162,14 +148,11 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     private fetchByMicroflow(guid: string) {
         const actionname = this.props.dataSourceMicroflow;
         mx.ui.action(actionname, {
-            callback: mxObjects => {
-                const series = mxObjects as mendix.lib.MxObject[];
-                this.fetchDataFromSeries(series);
+            callback: mxObjects => this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[]),
+            error: error => {
+                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
+                this.setState({ data: [] });
             },
-            error: error => this.setState({
-                alertMessage: `Error while retrieving microflow data ${actionname}: ${error.message}`,
-                data: []
-            }),
             params: {
                 applyto: "selection",
                 guids: [ guid ]
@@ -180,13 +163,8 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
     private fetchDataFromSeries(series: mendix.lib.MxObject[]) {
         const seriesCount = series.length;
         series.forEach((object, index) => {
-            const data: DataProps = {
-                count: seriesCount,
-                guid: this.props.mxObject ? this.props.mxObject.getGuid() : "",
-                index,
-                lineColor: object.get(this.props.lineColor) as string,
-                seriesName: object.get(this.props.seriesNameAttribute) as string
-            };
+            const lineColor = object.get(this.props.lineColor) as string;
+            const seriesName = object.get(this.props.seriesNameAttribute) as string;
             object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
                 window.mx.data.get({
                     callback: mxObjects => {
@@ -200,10 +178,10 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
                         const lineData: ScatterData = {
                             connectgaps: true,
                             line: {
-                                color: data.lineColor
+                                color: lineColor
                             },
                             mode: this.props.mode.replace("o", "+") as Mode,
-                            name: data.seriesName,
+                            name: seriesName,
                             type: "scatter",
                             x: fetchedData.map(value => value.x),
                             y: fetchedData.map(value => value.y)
@@ -211,10 +189,10 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
 
                         this.addData(lineData, seriesCount === index + 1);
                     },
-                    error: error => this.setState({
-                        alertMessage: `An error occurred while retrieving data values: ${error}`,
-                        data: []
-                    }),
+                    error: error => {
+                        mx.ui.error(`An error occurred while retrieving data values: ${error}`);
+                        this.setState({ data: [] });
+                    },
                     filter: {
                         attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
                         sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
@@ -232,5 +210,3 @@ class LineChartContainer extends Component<LineChartContainerProps, LineChartCon
         }
     }
 }
-
-export { LineChartContainer as default, LineChartContainerProps };
