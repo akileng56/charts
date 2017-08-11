@@ -24,4 +24,5 @@ export interface ModelProps {
     widthUnit: "percentage" | "pixels";
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     rawDataAttribute: string;
+    layoutOptions: string;
 }

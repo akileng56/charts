@@ -1,11 +1,10 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
-import { Config, LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
-
-declare function require(name: string): string;
+import { Config, LineLayout, ScatterData } from "plotly.js";
+import * as Plotly from "plotly.js/dist/plotly";
 
 interface LineChartProps {
-    data?: ScatterData[];
+    data?: Partial<ScatterData>[];
     config?: Partial<Config>;
     layout?: Partial<LineLayout>;
     width: number;
@@ -18,8 +17,7 @@ interface LineChartProps {
 
 class LineChart extends Component<LineChartProps, {}> {
     private lineChart: HTMLDivElement;
-    private Plotly: PlotlyStatic;
-    private data: ScatterData[] = [
+    private data: Partial<ScatterData>[] = [
         {
             connectgaps: true,
             mode: "lines+markers",
@@ -33,7 +31,6 @@ class LineChart extends Component<LineChartProps, {}> {
     constructor(props: LineChartProps) {
         super(props);
 
-        this.Plotly = require("plotly.js/dist/plotly") as any;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -61,7 +58,7 @@ class LineChart extends Component<LineChartProps, {}> {
 
     componentWillUnmount() {
         if (this.lineChart) {
-            this.Plotly.purge(this.lineChart);
+            Plotly.purge(this.lineChart);
         }
         window.removeEventListener("resize", this.onResize);
     }
@@ -95,7 +92,7 @@ class LineChart extends Component<LineChartProps, {}> {
     private renderChart(props: LineChartProps) {
         const { data, config, layout } = props;
         if (this.lineChart) {
-            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, layout, config);
+            Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, layout, config);
         }
     }
 
@@ -114,7 +111,7 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     private onResize() {
-        this.Plotly.Plots.resize(this.lineChart);
+        Plotly.Plots.resize(this.lineChart);
     }
 }
 

@@ -5,7 +5,8 @@ import * as Ajv from "ajv";
 import { Alert } from "../../components/Alert";
 import { LineChart } from "./LineChart";
 import { Mode, ModelProps } from "../LineChart";
-import * as schema from "../schema/data.json";
+import * as dataSchema from "../schema/data.json";
+import * as layoutSchema from "../schema/layout.json";
 
 interface WrapperProps {
     "class"?: string;
@@ -60,7 +61,8 @@ export default class LineChartContainer extends Component<LineChartContainerProp
                     yaxis: {
                         showgrid: this.props.showGrid,
                         title: this.props.yAxisLabel
-                    }
+                    },
+                    ... this.getAdvancedLayoutOptions()
                 },
                 style: LineChartContainer.parseStyle(this.props.style),
                 width: this.props.width,
@@ -73,6 +75,9 @@ export default class LineChartContainer extends Component<LineChartContainerProp
 
     componentWillReceiveProps(newProps: LineChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
+        if (newProps.layoutOptions) {
+            this.setState({ alertMessage: this.validateAdvancedLayoutOptions(newProps.layoutOptions) });
+        }
         this.fetchData(newProps.mxObject);
     }
 
@@ -82,38 +87,52 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         }
     }
 
-    private validateAdvancedSeriesDataOptions(rawData: string, seriesName: string): boolean {
-        if (!rawData) {
-            return true;
-        }
+    private getValidator(): Ajv.Ajv {
         if (!this.ajv) {
             this.ajv = new Ajv();
         }
-        const validate = this.ajv.compile(schema);
-        if (!validate(JSON.parse(rawData))) {
-            this.setState({
-                alertMessage: `Error in series "${seriesName}" advanced data configuration: ${this.ajv.errorsText(validate.errors)}` // tslint:disable-line max-line-length
-            });
 
-            return false;
-        }
-
-        return true;
+        return this.ajv;
     }
 
-    public static parseStyle(style = ""): { [key: string]: string } {
+    private validateAdvancedSeriesDataOptions(rawData: string, seriesName: string): string {
+        if (!rawData) {
+            return "";
+        }
+        let errorMessage = "";
+        const validate = this.getValidator().compile(dataSchema);
         try {
-            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
-                const pair = line.split(":");
-                if (pair.length === 2) {
-                    const name = pair[ 0 ].trim().replace(/(-.)/g, match => match[ 1 ].toUpperCase());
-                    styleObject[ name ] = pair[ 1 ].trim();
-                }
-                return styleObject;
-            }, {});
+            if (!validate(JSON.parse(rawData))) {
+                errorMessage = `Error in series "${seriesName}" advanced data configuration: ${this.ajv.errorsText(validate.errors)}`; // tslint:disable-line max-line-length
+            }
         } catch (error) {
-            // tslint:disable-next-line no-console
-            console.log("Failed to parse style", style, error);
+            errorMessage = `Invalid JSON in series "${seriesName}": ${error.message}`;
+        }
+
+        return errorMessage;
+    }
+
+    private validateAdvancedLayoutOptions(options: string): string {
+        let errorMessage = "";
+        try {
+            const validate = this.getValidator().compile(layoutSchema);
+            if (!validate(JSON.parse(options))) {
+                errorMessage = `Error in advanced layout options: ${this.ajv.errorsText(validate.errors)}`;
+            }
+        } catch (error) {
+            errorMessage = `Invalid layout JSON: ${error.message}`;
+        }
+
+        return errorMessage;
+    }
+
+    private getAdvancedLayoutOptions(): object {
+        if (this.props.layoutOptions) {
+            try {
+                return JSON.parse(this.props.layoutOptions);
+            } catch (error) {
+                return {};
+            }
         }
 
         return {};
@@ -190,44 +209,47 @@ export default class LineChartContainer extends Component<LineChartContainerProp
             const lineColor = object.get(this.props.lineColor) as string;
             const seriesName = object.get(this.props.seriesNameAttribute) as string;
             const rawData = this.props.rawDataAttribute && object.get(this.props.rawDataAttribute) as string;
-            if (this.validateAdvancedSeriesDataOptions(rawData, seriesName)) {
-                object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
-                    window.mx.data.get({
-                        callback: mxObjects => {
-                            const fetchedData = mxObjects.map(value => {
-                                return {
-                                    x: value.get(this.props.xValueAttribute) as Datum,
-                                    y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
-                                };
-                            });
-
-                            const advancedOptions = rawData ? JSON.parse(rawData) : {};
-                            const lineData: ScatterData = {
-                                connectgaps: true,
-                                line: {
-                                    color: lineColor
-                                },
-                                mode: this.props.mode.replace("o", "+") as Mode,
-                                name: seriesName,
-                                type: "scatter",
-                                ...advancedOptions
+            const validationError = this.validateAdvancedSeriesDataOptions(rawData, seriesName);
+            if (!validationError) {
+                const dataEntityPath = this.props.dataEntity.split("/");
+                const xpath = `//${dataEntityPath[1]}[${dataEntityPath[0]} = ${object.getGuid()}]`;
+                window.mx.data.get({
+                    callback: mxObjects => {
+                        const fetchedData = mxObjects.map(value => {
+                            return {
+                                x: value.get(this.props.xValueAttribute) as Datum,
+                                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
                             };
-                            lineData.x = fetchedData.map(value => value.x);
-                            lineData.y = fetchedData.map(value => value.y);
+                        });
 
-                            this.addData(lineData, seriesCount === index + 1);
-                        },
-                        error: error => {
-                            mx.ui.error(`An error occurred while retrieving data values: ${error}`);
-                            this.setState({ data: [] });
-                        },
-                        filter: {
-                            attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
-                            sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
-                        },
-                        guids: values.map(value => value.getGuid())
-                    });
+                        const advancedOptions = rawData ? JSON.parse(rawData) : {};
+                        const lineData: ScatterData = {
+                            connectgaps: true,
+                            line: {
+                                color: lineColor
+                            },
+                            mode: this.props.mode.replace("o", "+") as Mode,
+                            name: seriesName,
+                            type: "scatter",
+                            ...advancedOptions
+                        };
+                        lineData.x = fetchedData.map(value => value.x);
+                        lineData.y = fetchedData.map(value => value.y);
+
+                        this.addData(lineData, seriesCount === index + 1);
+                    },
+                    error: error => {
+                        mx.ui.error(`An error occurred while retrieving data values: ${error}`);
+                        this.setState({ data: [] });
+                    },
+                    filter: {
+                        attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
+                        sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
+                    },
+                    xpath
                 });
+            } else {
+                this.setState({ alertMessage: validationError });
             }
         });
     }
@@ -237,5 +259,23 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         if (isFinal) {
             this.setState({ data: this.data });
         }
+    }
+
+    public static parseStyle(style = ""): { [key: string]: string } {
+        try {
+            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
+                const pair = line.split(":");
+                if (pair.length === 2) {
+                    const name = pair[ 0 ].trim().replace(/(-.)/g, match => match[ 1 ].toUpperCase());
+                    styleObject[ name ] = pair[ 1 ].trim();
+                }
+                return styleObject;
+            }, {});
+        } catch (error) {
+            // tslint:disable-next-line no-console
+            console.log("Failed to parse style", style, error);
+        }
+
+        return {};
     }
 }

@@ -13,7 +13,7 @@ type VisibilityMap = {
 
 // tslint:disable-next-line class-name
 export class preview extends Component<LineChartContainerProps, {}> {
-    private data: ScatterData[] = [
+    private data: Partial<ScatterData>[] = [
         {
             connectgaps: true,
             mode: "lines+markers",
