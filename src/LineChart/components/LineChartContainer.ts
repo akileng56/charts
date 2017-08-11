@@ -1,17 +1,21 @@
 import { Component, createElement } from "react";
 
 import { Datum, ScatterData } from "plotly.js";
-import { Alert } from "./../../components/Alert";
+import * as Ajv from "ajv";
+import { Alert } from "../../components/Alert";
 import { LineChart } from "./LineChart";
 import { Mode, ModelProps } from "../LineChart";
+import * as schema from "../schema/data.json";
 
-export interface LineChartContainerProps extends ModelProps {
-    class?: string;
+interface WrapperProps {
+    "class"?: string;
     mxform: mxui.lib.form._FormBase;
     mxObject?: mendix.lib.MxObject;
     style?: string;
     readOnly: boolean;
 }
+
+export type LineChartContainerProps = WrapperProps & ModelProps;
 
 interface LineChartContainerState {
     alertMessage?: string;
@@ -21,6 +25,7 @@ interface LineChartContainerState {
 export default class LineChartContainer extends Component<LineChartContainerProps, LineChartContainerState> {
     private subscriptionHandles: number[] = [];
     private data: ScatterData[] = [];
+    private ajv: Ajv.Ajv;
 
     constructor(props: LineChartContainerProps) {
         super(props);
@@ -77,13 +82,32 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         }
     }
 
-    public static parseStyle(style = ""): {[key: string]: string} {
+    private validateAdvancedSeriesDataOptions(rawData: string, seriesName: string): boolean {
+        if (!rawData) {
+            return true;
+        }
+        if (!this.ajv) {
+            this.ajv = new Ajv();
+        }
+        const validate = this.ajv.compile(schema);
+        if (!validate(JSON.parse(rawData))) {
+            this.setState({
+                alertMessage: `Error in series "${seriesName}" advanced data configuration: ${this.ajv.errorsText(validate.errors)}` // tslint:disable-line max-line-length
+            });
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public static parseStyle(style = ""): { [key: string]: string } {
         try {
-            return style.split(";").reduce<{[key: string]: string}>((styleObject, line) => {
+            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
                 const pair = line.split(":");
                 if (pair.length === 2) {
-                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
-                    styleObject[name] = pair[1].trim();
+                    const name = pair[ 0 ].trim().replace(/(-.)/g, match => match[ 1 ].toUpperCase());
+                    styleObject[ name ] = pair[ 1 ].trim();
                 }
                 return styleObject;
             }, {});
@@ -132,7 +156,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
             ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
             : "";
         const entityName = seriesEntity.indexOf("/") > -1
-            ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
+            ? seriesEntity.split("/")[ seriesEntity.split("/").length - 1 ]
             : seriesEntity;
         const xpath = "//" + entityName + constraint;
         window.mx.data.get({
@@ -146,11 +170,11 @@ export default class LineChartContainer extends Component<LineChartContainerProp
     }
 
     private fetchByMicroflow(guid: string) {
-        const actionname = this.props.dataSourceMicroflow;
-        mx.ui.action(actionname, {
+        const actionName = this.props.dataSourceMicroflow;
+        mx.ui.action(actionName, {
             callback: mxObjects => this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[]),
             error: error => {
-                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
+                mx.ui.error(`Error while retrieving microflow data ${actionName}: ${error.message}`);
                 this.setState({ data: [] });
             },
             params: {
@@ -165,41 +189,46 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         series.forEach((object, index) => {
             const lineColor = object.get(this.props.lineColor) as string;
             const seriesName = object.get(this.props.seriesNameAttribute) as string;
-            object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
-                window.mx.data.get({
-                    callback: mxObjects => {
-                        const fetchedData = mxObjects.map(value => {
-                            return {
-                                x: value.get(this.props.xValueAttribute) as Datum,
-                                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
+            const rawData = this.props.rawDataAttribute && object.get(this.props.rawDataAttribute) as string;
+            if (this.validateAdvancedSeriesDataOptions(rawData, seriesName)) {
+                object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
+                    window.mx.data.get({
+                        callback: mxObjects => {
+                            const fetchedData = mxObjects.map(value => {
+                                return {
+                                    x: value.get(this.props.xValueAttribute) as Datum,
+                                    y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
+                                };
+                            });
+
+                            const advancedOptions = rawData ? JSON.parse(rawData) : {};
+                            const lineData: ScatterData = {
+                                connectgaps: true,
+                                line: {
+                                    color: lineColor
+                                },
+                                mode: this.props.mode.replace("o", "+") as Mode,
+                                name: seriesName,
+                                type: "scatter",
+                                ...advancedOptions
                             };
-                        });
+                            lineData.x = fetchedData.map(value => value.x);
+                            lineData.y = fetchedData.map(value => value.y);
 
-                        const lineData: ScatterData = {
-                            connectgaps: true,
-                            line: {
-                                color: lineColor
-                            },
-                            mode: this.props.mode.replace("o", "+") as Mode,
-                            name: seriesName,
-                            type: "scatter",
-                            x: fetchedData.map(value => value.x),
-                            y: fetchedData.map(value => value.y)
-                        };
-
-                        this.addData(lineData, seriesCount === index + 1);
-                    },
-                    error: error => {
-                        mx.ui.error(`An error occurred while retrieving data values: ${error}`);
-                        this.setState({ data: [] });
-                    },
-                    filter: {
-                        attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
-                        sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
-                    },
-                    guids: values.map(value => value.getGuid())
+                            this.addData(lineData, seriesCount === index + 1);
+                        },
+                        error: error => {
+                            mx.ui.error(`An error occurred while retrieving data values: ${error}`);
+                            this.setState({ data: [] });
+                        },
+                        filter: {
+                            attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
+                            sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
+                        },
+                        guids: values.map(value => value.getGuid())
+                    });
                 });
-            });
+            }
         });
     }
 

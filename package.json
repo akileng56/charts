@@ -32,6 +32,7 @@
     "@types/plotly.js": "^1.22.1",
     "@types/react": "^15.0.28",
     "@types/react-dom": "^15.5.0",
+    "ajv": "^5.2.2",
     "check-dependencies": "^1.0.1",
     "clean-webpack-plugin": "^0.1.16",
     "copy-webpack-plugin": "^4.0.1",
