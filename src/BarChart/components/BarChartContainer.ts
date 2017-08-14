@@ -1,6 +1,8 @@
 import { Component, createElement } from "react";
 
 import { BarData, BarMode, Datum } from "plotly.js";
+
+import { Alert } from "./../../components/Alert";
 import { BarChart } from "./BarChart";
 
 export interface WrapperProps {
@@ -9,22 +11,24 @@ export interface WrapperProps {
     mxObject?: mendix.lib.MxObject;
     style?: string;
     readOnly: boolean;
-    width: number;
-    widthUnit: WidthUnit;
-    height: number;
-    heightUnit: HeightUnit;
 }
 
 interface BarChartContainerProps extends WrapperProps {
     barMode: BarMode;
     dataSourceMicroflow: string;
     dataSourceType: "xpath" | "microflow";
+    entityConstraint: string;
+    responsive: boolean;
     title?: string;
     seriesEntity: string;
     seriesNameAttribute: string;
     showGrid: boolean;
     showToolbar: boolean;
     dataEntity: string;
+    width: number;
+    widthUnit: WidthUnit;
+    height: number;
+    heightUnit: HeightUnit;
     xAxisLabel: string;
     xValueAttribute: string;
     yAxisLabel: string;
@@ -33,6 +37,7 @@ interface BarChartContainerProps extends WrapperProps {
 }
 
 interface BarChartContainerState {
+    alertMessage?: string;
     data?: BarData[];
 }
 
@@ -46,26 +51,42 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
     constructor(props: BarChartContainerProps) {
         super(props);
 
-        this.state = { data: [] };
+        this.state = {
+            alertMessage: BarChartContainer.validateProps(this.props),
+            data: []
+        };
         this.fetchData = this.fetchData.bind(this);
     }
 
     render() {
-        return createElement(BarChart, {
-            ...this.props as WrapperProps,
-            config: {
-                displayModeBar: this.props.showToolbar
-            },
-            data: this.state.data,
-            layout: {
-                barmode: this.props.barMode,
-                xaxis: { title: this.props.xAxisLabel },
-                yaxis: {
-                    showgrid: this.props.showGrid,
-                    title: this.props.yAxisLabel
-                }
+        if (this.props.mxObject) {
+            if (this.state.alertMessage) {
+                return createElement(Alert, { className: "widget-bar-chart-alert", message: this.state.alertMessage });
             }
-        });
+            return createElement(BarChart, {
+                className: this.props.class,
+                config: {
+                    displayModeBar: this.props.showToolbar
+                },
+                data: this.state.data,
+                height: this.props.height,
+                heightUnit: this.props.heightUnit,
+                layout: {
+                    autosize: this.props.responsive,
+                    barmode: this.props.barMode,
+                    xaxis: { title: this.props.xAxisLabel },
+                    yaxis: {
+                        showgrid: this.props.showGrid,
+                        title: this.props.yAxisLabel
+                    }
+                },
+                style: BarChartContainer.parseStyle(this.props.style),
+                width: this.props.width,
+                widthUnit: this.props.widthUnit
+            });
+        }
+
+        return null;
     }
 
     componentWillReceiveProps(newProps: BarChartContainerProps) {
@@ -77,6 +98,15 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
         if (this.subscriptionHandles) {
             this.subscriptionHandles.forEach(mx.data.unsubscribe);
         }
+    }
+
+    public static validateProps(props: BarChartContainerProps): string {
+        let errorMessage = "";
+        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
+            errorMessage += ` data source type is set to 'Microflow' but 'Source microflow' is missing \n`;
+        }
+
+        return errorMessage && `Configuration error :\n\n ${errorMessage}`;
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
@@ -107,10 +137,20 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
             series.forEach((object, index) => {
                 const seriesName = object.get(this.props.seriesNameAttribute) as string;
                 object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
+                    const { seriesEntity } = this.props;
+                    const constraint = this.props.entityConstraint
+                        ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
+                        : "";
+                    const entityName = seriesEntity.indexOf("/") > -1
+                        ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
+                        : seriesEntity;
+                    const xpath = "//" + entityName + constraint;
                     window.mx.data.get({
-                        callback: seriesData => this.mapData(seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index),
+                        callback: seriesData => this.mapData(
+                            seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index
+                        ),
                         error: error => window.mx.ui.error(
-                            `An error occurred while retrieving data via XPath: ${error}`
+                            `An error occurred while retrieving data via XPath (${xpath}): ${error}`
                         ),
                         filter: {
                             sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
@@ -140,10 +180,12 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
             const seriesName = object.get(this.props.seriesNameAttribute) as string;
             object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
                 window.mx.data.get({
-                    callback: seriesData => this.mapData(seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index),
-                    error: error => window.mx.ui.error(`An error occurred while retrieving data values: ${error}`),
+                    callback: seriesData => this.mapData(
+                        seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index),
+                    error: error => window.mx.ui.error(`An error occurred while retrieving data values: ${error}`
+                ),
                     filter: {
-                        sort: [[this.props.xAxisSortAttribute, "asc"]]
+                        sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
                     },
                     guids: values.map(value => value.getGuid())
                 });
@@ -151,7 +193,7 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
         });
     }
 
-    private mapData(seriesData : mendix.lib.MxObject[], seriesName: string, seriesCount: number, index: number) {
+    private mapData(seriesData: mendix.lib.MxObject[], seriesName: string, seriesCount: number, index: number) {
         const fetchedData = seriesData.map(value => {
             return {
                 x: value.get(this.props.xValueAttribute) as Datum,
@@ -189,7 +231,7 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
             }, {});
         } catch (error) {
             // tslint:disable-next-line no-console
-            window.console.log("Failed to parse style", style, error);
+            console.log("Failed to parse style", style, error);
         }
 
         return {};

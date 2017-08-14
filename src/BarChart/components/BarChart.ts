@@ -2,15 +2,18 @@ import { Component, createElement } from "react";
 import * as classNames from "classnames";
 import { BarData, BarLayout, Config, PlotlyStatic } from "plotly.js";
 
-import { WrapperProps } from "./BarChartContainer";
-
 declare function require(name: string): string;
 
-interface BarChartProps extends WrapperProps {
+interface BarChartProps {
     data?: BarData[];
     layout?: Partial<BarLayout>;
     config?: Partial<Config>;
     className?: string;
+    width: number;
+    widthUnit: string;
+    height: number;
+    heightUnit: string;
+    style: object;
 }
 
 class BarChart extends Component<BarChartProps, {}> {
@@ -33,11 +36,13 @@ class BarChart extends Component<BarChartProps, {}> {
     }
 
     render() {
-        return createElement("div", { className: classNames("widget-plotly-bar", this.props.className),
-        ref: this.getPlotlyNodeRef,
-        style: {
-            ...this.getStyle()
-        } });
+        return createElement("div", {
+            className: classNames("widget-plotly-bar", this.props.className),
+            ref: this.getPlotlyNodeRef,
+            style: {
+                ...this.getStyle()
+            }
+        });
     }
 
     componentDidMount() {

@@ -4,6 +4,7 @@ import { BarData } from "plotly.js";
 
 import { BarChart } from "./components/BarChart";
 import BarChartContainer, { BarChartContainerProps } from "./components/BarChartContainer";
+import { Alert } from "../components/Alert";
 
 // tslint:disable-next-line class-name
 export class preview extends Component<BarChartContainerProps, {}> {
@@ -15,26 +16,32 @@ export class preview extends Component<BarChartContainerProps, {}> {
         }
     ];
     render() {
-        return createElement(BarChart, {
-            config: {
-                displayModeBar: this.props.showToolbar
-            },
-            data: this.data,
-            height: this.props.height,
-            heightUnit: this.props.heightUnit,
-            layout: {
-                autosize: this.props.responsive,
-                barmode: this.props.barMode,
-                xaxis: { title: this.props.xAxisLabel },
-                yaxis: {
-                    showgrid: this.props.showGrid,
-                    title: this.props.yAxisLabel
-                }
-            },
-            style: BarChartContainer.parseStyle(this.props.style),
-            width: this.props.width,
-            widthUnit: this.props.widthUnit
-        });
+        return createElement("div", {},
+            createElement(Alert, {
+                className: "widget-bar-chart-alert",
+                message: BarChartContainer.validateProps(this.props)
+            }),
+            createElement(BarChart, {
+                config: {
+                    displayModeBar: this.props.showToolbar
+                },
+                data: this.data,
+                height: this.props.height,
+                heightUnit: this.props.heightUnit,
+                layout: {
+                    autosize: this.props.responsive,
+                    barmode: this.props.barMode,
+                    xaxis: { title: this.props.xAxisLabel },
+                    yaxis: {
+                        showgrid: this.props.showGrid,
+                        title: this.props.yAxisLabel
+                    }
+                },
+                style: BarChartContainer.parseStyle(this.props.style),
+                width: this.props.width,
+                widthUnit: this.props.widthUnit
+            })
+        );
     }
 }
 
