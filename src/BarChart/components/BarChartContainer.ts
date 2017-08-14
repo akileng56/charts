@@ -9,13 +9,13 @@ interface WrapperProps {
     mxObject?: mendix.lib.MxObject;
     style?: string;
     readOnly: boolean;
-}
-
-interface BarChartContainerProps extends WrapperProps {
     width: number;
     widthUnit: WidthUnit;
     height: number;
     heightUnit: HeightUnit;
+}
+
+interface BarChartContainerProps extends WrapperProps {
     barMode: BarMode;
     title?: string;
     seriesEntity: string;
@@ -23,7 +23,9 @@ interface BarChartContainerProps extends WrapperProps {
     showGrid: boolean;
     showToolbar: boolean;
     dataEntity: string;
+    xAxisLabel: string;
     xValueAttribute: string;
+    yAxisLabel: string;
     yValueAttribute: string;
     xAxisSortAttribute: string;
 }
@@ -54,8 +56,11 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
             data: this.state.data,
             layout: {
                 barmode: this.props.barMode,
-                title: this.props.title,
-                yaxis: { showgrid: this.props.showGrid }
+                xaxis: { title: this.props.xAxisLabel },
+                yaxis: {
+                    showgrid: this.props.showGrid,
+                    title: this.props.yAxisLabel
+                }
             }
         });
     }
@@ -106,7 +111,9 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
 
                                 this.addSeries(barData, seriesCount === index + 1);
                             },
-                            error: error => console.log(error),
+                            error: error => window.mx.ui.error(
+                                `An error occurred while retrieving data via XPath: ${error}`
+                            ),
                             filter: {
                                 sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
                             },
