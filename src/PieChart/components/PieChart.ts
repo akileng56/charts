@@ -14,9 +14,9 @@ interface PieChartProps {
     type: ChartType;
 }
 
-class PieChart extends Component<PieChartProps, {}> {
+export class PieChart extends Component<PieChartProps, {}> {
     private pieChart: HTMLDivElement;
-    private Plotly: PlotlyStatic;
+    private plotly: PlotlyStatic;
     private data: any[] = [ {
         hole: this.props.type === "donut" ? .4 : 0,
         hoverinfo: "label+percent+name",
@@ -29,7 +29,7 @@ class PieChart extends Component<PieChartProps, {}> {
     constructor(props: PieChartProps) {
         super(props);
 
-        this.Plotly = require("plotly.js/dist/plotly") as any;
+        this.plotly = require("plotly.js/dist/plotly") as any;
 
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
     }
@@ -51,7 +51,7 @@ class PieChart extends Component<PieChartProps, {}> {
 
     componentWillUnmount() {
         if (this.pieChart) {
-            this.Plotly.purge(this.pieChart);
+            this.plotly.purge(this.pieChart);
         }
     }
 
@@ -61,11 +61,9 @@ class PieChart extends Component<PieChartProps, {}> {
 
     private renderChart(props: PieChartProps) {
         const { data, config, layout } = props;
+
         if (this.pieChart) {
-            this.Plotly.newPlot(this.pieChart, data && data.length ? data : this.data, layout, config);
+            this.plotly.newPlot(this.pieChart, data && data.length ? data : this.data, layout, config);
         }
     }
-
 }
-
-export { PieChart };
