@@ -1,13 +1,13 @@
 import { Component, createElement } from "react";
 
 import * as classNames from "classnames";
-import { ChartData, Config, Layout, PlotlyStatic, Root } from "plotly.js";
+import { Config, Layout, PieData, PlotlyStatic, Root } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
 
 import { ChartType } from "./PieChartContainer";
 
 interface PieChartProps {
-    data?: ChartData[];
+    data?: PieData[];
     config?: Partial<Config>;
     layout?: Partial<Layout>;
     type: ChartType;
@@ -16,7 +16,7 @@ interface PieChartProps {
 export class PieChart extends Component<PieChartProps, {}> {
     private pieChart: Root;
     private plotly: PlotlyStatic;
-    private data: ChartData[] = [ {
+    private data: PieData[] = [ {
         hole: this.props.type === "donut" ? .4 : 0,
         hoverinfo: "label+name",
         labels: [ "US", "China", "European Union", "Russian Federation", "Brazil", "India", "Rest of World" ],
