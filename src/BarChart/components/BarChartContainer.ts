@@ -3,7 +3,7 @@ import { Component, createElement } from "react";
 import { BarData, BarMode, Datum } from "plotly.js";
 import { BarChart } from "./BarChart";
 
-interface WrapperProps {
+export interface WrapperProps {
     class?: string;
     mxform: mxui.lib.form._FormBase;
     mxObject?: mendix.lib.MxObject;
@@ -17,6 +17,8 @@ interface WrapperProps {
 
 interface BarChartContainerProps extends WrapperProps {
     barMode: BarMode;
+    dataSourceMicroflow: string;
+    dataSourceType: "xpath" | "microflow";
     title?: string;
     seriesEntity: string;
     seriesNameAttribute: string;
@@ -45,11 +47,12 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
         super(props);
 
         this.state = { data: [] };
-        this.handleSubscription = this.handleSubscription.bind(this);
+        this.fetchData = this.fetchData.bind(this);
     }
 
     render() {
         return createElement(BarChart, {
+            ...this.props as WrapperProps,
             config: {
                 displayModeBar: this.props.showToolbar
             },
@@ -67,7 +70,13 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
 
     componentWillReceiveProps(newProps: BarChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
-        this.fetchAndProcessData(newProps.mxObject);
+        this.fetchData(newProps.mxObject);
+    }
+
+    componentWillUnmount() {
+        if (this.subscriptionHandles) {
+            this.subscriptionHandles.forEach(mx.data.unsubscribe);
+        }
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
@@ -76,53 +85,89 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
 
         if (mxObject) {
             this.subscriptionHandles.push(mx.data.subscribe({
-                callback: this.handleSubscription,
+                callback: () => this.fetchData(mxObject),
                 guid: mxObject.getGuid()
             }));
         }
     }
 
-    private handleSubscription() {
-        this.fetchAndProcessData(this.props.mxObject);
+    private fetchData(mxObject?: mendix.lib.MxObject) {
+        if (mxObject && this.props.seriesEntity) {
+            if (this.props.dataSourceType === "xpath") {
+                this.fetchByXpath(mxObject);
+            } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
+                this.fetchByMicroflow(mxObject.getGuid());
+            }
+        }
     }
 
-    private fetchAndProcessData(mxObject?: mendix.lib.MxObject) {
-        if (mxObject && this.props.seriesEntity) {
-            mxObject.fetch(this.props.seriesEntity, (series: mendix.lib.MxObject[]) => {
-                const seriesCount = series.length;
-                series.forEach((object, index) => {
-                    const seriesName = object.get(this.props.seriesNameAttribute) as string;
-                    object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
-                        window.mx.data.get({
-                            callback: seriesData => {
-                                const fetchedData = seriesData.map(value => {
-                                    return {
-                                        x: value.get(this.props.xValueAttribute) as Datum,
-                                        y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
-                                    };
-                                });
-
-                                const barData: BarData = {
-                                    name: seriesName,
-                                    type: "bar",
-                                    x: fetchedData.map(value => value.x),
-                                    y: fetchedData.map(value => value.y)
-                                };
-
-                                this.addSeries(barData, seriesCount === index + 1);
-                            },
-                            error: error => window.mx.ui.error(
-                                `An error occurred while retrieving data via XPath: ${error}`
-                            ),
-                            filter: {
-                                sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
-                            },
-                            guids: values.map(value => value.getGuid())
-                        });
+    private fetchByXpath(mxObject: mendix.lib.MxObject) {
+        mxObject.fetch(this.props.seriesEntity, (series: mendix.lib.MxObject[]) => {
+            const seriesCount = series.length;
+            series.forEach((object, index) => {
+                const seriesName = object.get(this.props.seriesNameAttribute) as string;
+                object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
+                    window.mx.data.get({
+                        callback: seriesData => this.mapData(seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index),
+                        error: error => window.mx.ui.error(
+                            `An error occurred while retrieving data via XPath: ${error}`
+                        ),
+                        filter: {
+                            sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
+                        },
+                        guids: values.map(value => value.getGuid())
                     });
                 });
             });
-        }
+        });
+    }
+
+    private fetchByMicroflow(guid: string) {
+        const actionname = this.props.dataSourceMicroflow;
+        mx.ui.action(actionname, {
+            callback: mxObjects => this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[]),
+            error: error => window.mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`),
+            params: {
+                applyto: "selection",
+                guids: [ guid ]
+            }
+        });
+    }
+
+    private fetchDataFromSeries(series: mendix.lib.MxObject[]) {
+        const seriesCount = series.length;
+        series.forEach((object, index) => {
+            const seriesName = object.get(this.props.seriesNameAttribute) as string;
+            object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
+                window.mx.data.get({
+                    callback: seriesData => this.mapData(seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index),
+                    error: error => window.mx.ui.error(`An error occurred while retrieving data values: ${error}`),
+                    filter: {
+                        sort: [[this.props.xAxisSortAttribute, "asc"]]
+                    },
+                    guids: values.map(value => value.getGuid())
+                });
+            });
+        });
+    }
+
+    private mapData(seriesData : mendix.lib.MxObject[], seriesName: string, seriesCount: number, index: number) {
+        const fetchedData = seriesData.map(value => {
+            return {
+                x: value.get(this.props.xValueAttribute) as Datum,
+                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
+            };
+        });
+
+        const barData: BarData = {
+            name: seriesName,
+            type: "bar",
+            x: fetchedData.map(value => value.x),
+            y: fetchedData.map(value => value.y)
+        };
+
+        this.addSeries(barData, seriesCount === index + 1);
+
     }
 
     private addSeries(series: BarData, isFinal = false) {

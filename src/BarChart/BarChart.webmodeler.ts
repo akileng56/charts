@@ -1,8 +1,45 @@
-import { Component, DOM } from "react";
+import { Component, createElement } from "react";
+
+import { BarData } from "plotly.js";
+
+import { BarChart } from "./components/BarChart";
+import BarChartContainer, { BarChartContainerProps } from "./components/BarChartContainer";
 
 // tslint:disable-next-line class-name
-export class preview extends Component<{}, {}> {
+export class preview extends Component<BarChartContainerProps, {}> {
+    private data: BarData[] = [
+        {
+            type: "bar",
+            x: [ "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7" ],
+            y: [ 20, 14, 23, 25, 50, 32, 44 ]
+        }
+    ];
     render() {
-        return DOM.div();
+        return createElement(BarChart, {
+            config: {
+                displayModeBar: this.props.showToolbar
+            },
+            data: this.data,
+            height: this.props.height,
+            heightUnit: this.props.heightUnit,
+            layout: {
+                autosize: this.props.responsive,
+                barmode: this.props.barMode,
+                xaxis: { title: this.props.xAxisLabel },
+                yaxis: {
+                    showgrid: this.props.showGrid,
+                    title: this.props.yAxisLabel
+                }
+            },
+            style: BarChartContainer.parseStyle(this.props.style),
+            width: this.props.width,
+            widthUnit: this.props.widthUnit
+        });
     }
+}
+
+export function getPreviewCss() {
+    return (
+        require("plotly.js/src/css/style.scss")
+    );
 }

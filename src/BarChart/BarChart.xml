@@ -9,6 +9,15 @@
             <category>Data source</category>
             <description>Series entity</description>
         </property>
+        <property key="dataSourceType" type="enumeration" defaultValue="xpath">
+            <caption>Data source type</caption>
+            <category>Data source</category>
+            <description>Type of source</description>
+            <enumerationValues>
+                <enumerationValue key="xpath">Database</enumerationValue>
+                <enumerationValue key="microflow">Microflow</enumerationValue>
+            </enumerationValues>
+        </property>
         <property key="seriesNameAttribute" type="attribute" entityProperty="seriesEntity">
             <caption>Series name attribute</caption>
             <category>Data source</category>
