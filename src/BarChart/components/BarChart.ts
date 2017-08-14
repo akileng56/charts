@@ -1,8 +1,8 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
-import { BarData, BarLayout, Config, PlotlyStatic } from "plotly.js";
 
-declare function require(name: string): string;
+import { BarData, BarLayout, Config, PlotlyStatic } from "plotly.js";
+import * as Plotly from "plotly.js/dist/plotly";
 
 interface BarChartProps {
     data?: BarData[];
@@ -13,10 +13,10 @@ interface BarChartProps {
     widthUnit: string;
     height: number;
     heightUnit: string;
-    style: object;
+    style?: object;
 }
 
-class BarChart extends Component<BarChartProps, {}> {
+export class BarChart extends Component<BarChartProps, {}> {
     private plotlyNode: HTMLDivElement;
     private Plotly: PlotlyStatic;
     private data: BarData[] = [
@@ -30,9 +30,9 @@ class BarChart extends Component<BarChartProps, {}> {
     constructor(props: BarChartProps) {
         super(props);
 
-        this.Plotly = require("plotly.js/dist/plotly") as any;
-
+        this.Plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
+        this.onResize = this.onResize.bind(this);
     }
 
     render() {
@@ -40,19 +40,20 @@ class BarChart extends Component<BarChartProps, {}> {
             className: classNames("widget-plotly-bar", this.props.className),
             ref: this.getPlotlyNodeRef,
             style: {
-                ...this.getStyle()
+                ...this.getStyle(),
+                ...this.props.style
             }
         });
     }
 
     componentDidMount() {
-        this.renderChart(this.props.data);
+        this.renderChart(this.props);
         this.setUpEvents();
         this.adjustStyle();
     }
 
     componentWillReceiveProps(newProps: BarChartProps) {
-        this.renderChart(newProps.data);
+        this.renderChart(newProps);
     }
 
     componentWillUnmount() {
@@ -88,13 +89,10 @@ class BarChart extends Component<BarChartProps, {}> {
         }
     }
 
-    private renderChart(data?: BarData[]) {
+    private renderChart(props: BarChartProps) {
+        const { config, data, layout } = props;
         if (this.plotlyNode) {
-            this.Plotly.newPlot(
-                this.plotlyNode,
-                data && data.length ? data : this.data, this.props.layout,
-                this.props.config
-            );
+            this.Plotly.newPlot(this.plotlyNode, data && data.length ? data : this.data, layout, config);
         }
     }
 
@@ -116,5 +114,3 @@ class BarChart extends Component<BarChartProps, {}> {
         this.Plotly.Plots.resize(this.plotlyNode);
     }
 }
-
-export { BarChart };

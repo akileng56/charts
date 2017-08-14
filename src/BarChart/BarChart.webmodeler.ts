@@ -6,6 +6,10 @@ import { BarChart } from "./components/BarChart";
 import BarChartContainer, { BarChartContainerProps } from "./components/BarChartContainer";
 import { Alert } from "../components/Alert";
 
+type VisibilityMap = {
+    [ P in keyof BarChartContainerProps ]: boolean;
+};
+
 // tslint:disable-next-line class-name
 export class preview extends Component<BarChartContainerProps, {}> {
     private data: BarData[] = [
@@ -15,6 +19,7 @@ export class preview extends Component<BarChartContainerProps, {}> {
             y: [ 20, 14, 23, 25, 50, 32, 44 ]
         }
     ];
+
     render() {
         return createElement("div", {},
             createElement(Alert, {
@@ -49,4 +54,16 @@ export function getPreviewCss() {
     return (
         require("plotly.js/src/css/style.scss")
     );
+}
+
+export function getVisibleProperties(valueMap: BarChartContainerProps, visibilityMap: VisibilityMap) {
+    if (valueMap.dataSourceType === "xpath") {
+        visibilityMap.entityConstraint = true;
+        visibilityMap.dataSourceMicroflow = false;
+    } else if (valueMap.dataSourceType === "microflow") {
+        visibilityMap.entityConstraint = false;
+        visibilityMap.dataSourceMicroflow = true;
+    }
+
+    return visibilityMap;
 }

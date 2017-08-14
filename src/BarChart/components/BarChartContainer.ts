@@ -13,7 +13,7 @@ export interface WrapperProps {
     readOnly: boolean;
 }
 
-interface BarChartContainerProps extends WrapperProps {
+export interface BarChartContainerProps extends WrapperProps {
     barMode: BarMode;
     dataSourceMicroflow: string;
     dataSourceType: "xpath" | "microflow";
@@ -44,7 +44,7 @@ interface BarChartContainerState {
 type WidthUnit = "percentage" | "pixels";
 type HeightUnit = "percentageOfWidth" | "percentageOfParent" | "pixels";
 
-class BarChartContainer extends Component<BarChartContainerProps, BarChartContainerState> {
+export default class BarChartContainer extends Component<BarChartContainerProps, BarChartContainerState> {
     private subscriptionHandles: number[] = [];
     private data: BarData[] = [];
 
@@ -98,6 +98,24 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
         if (this.subscriptionHandles) {
             this.subscriptionHandles.forEach(mx.data.unsubscribe);
         }
+    }
+
+    public static parseStyle(style = ""): { [key: string]: string } {
+        try {
+            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
+                const pair = line.split(":");
+                if (pair.length === 2) {
+                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
+                    styleObject[name] = pair[1].trim();
+                }
+                return styleObject;
+            }, {});
+        } catch (error) {
+            // tslint:disable-next-line no-console
+            console.log("Failed to parse style", style, error);
+        }
+
+        return {};
     }
 
     public static validateProps(props: BarChartContainerProps): string {
@@ -218,24 +236,4 @@ class BarChartContainer extends Component<BarChartContainerProps, BarChartContai
             this.setState({ data: this.data });
         }
     }
-
-    public static parseStyle(style = ""): {[key: string]: string} {
-        try {
-            return style.split(";").reduce<{[key: string]: string}>((styleObject, line) => {
-                const pair = line.split(":");
-                if (pair.length === 2) {
-                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
-                    styleObject[name] = pair[1].trim();
-                }
-                return styleObject;
-            }, {});
-        } catch (error) {
-            // tslint:disable-next-line no-console
-            console.log("Failed to parse style", style, error);
-        }
-
-        return {};
-    }
 }
-
-export { BarChartContainer as default, BarChartContainerProps };
