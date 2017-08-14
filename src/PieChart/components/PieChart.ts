@@ -1,25 +1,24 @@
 import { Component, createElement } from "react";
 
 import * as classNames from "classnames";
-import { Config, Layout, PlotlyStatic } from "plotly.js";
+import { ChartData, Config, Layout, PlotlyStatic, Root } from "plotly.js";
+import * as Plotly from "plotly.js/dist/plotly";
 
 import { ChartType } from "./PieChartContainer";
 
-declare function require(name: string): string;
-
 interface PieChartProps {
-    data?: any[];
+    data?: ChartData[];
     config?: Partial<Config>;
     layout?: Partial<Layout>;
     type: ChartType;
 }
 
 export class PieChart extends Component<PieChartProps, {}> {
-    private pieChart: HTMLDivElement;
+    private pieChart: Root;
     private plotly: PlotlyStatic;
-    private data: any[] = [ {
+    private data: ChartData[] = [ {
         hole: this.props.type === "donut" ? .4 : 0,
-        hoverinfo: "label+percent+name",
+        hoverinfo: "label+name",
         labels: [ "US", "China", "European Union", "Russian Federation", "Brazil", "India", "Rest of World" ],
         name: "GHG Emissions",
         type: "pie",
@@ -29,8 +28,7 @@ export class PieChart extends Component<PieChartProps, {}> {
     constructor(props: PieChartProps) {
         super(props);
 
-        this.plotly = require("plotly.js/dist/plotly") as any;
-
+        this.plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
     }
 
