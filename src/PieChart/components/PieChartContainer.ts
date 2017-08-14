@@ -32,7 +32,7 @@ interface PieChartContainerProps extends WrapperProps {
 }
 
 interface PieChartContainerState {
-    data?: number[];
+    values?: number[];
     labels?: string[];
 }
 
@@ -45,7 +45,8 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         super(props);
 
         this.state = {
-            data: []
+            labels: [],
+            values: []
         };
         this.fetchData = this.fetchData.bind(this);
     }
@@ -53,13 +54,20 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
     render() {
         if (this.props.mxObject) {
             return createElement(PieChart, {
+                config: {
+                    displayModeBar: this.props.showToolBar
+                },
                 data: [ {
                     hole: this.props.chartType === "donut" ? .4 : 0,
                     hoverinfo: "label",
                     labels: this.state.labels,
                     type: "pie",
-                    values: this.state.data
+                    values: this.state.values
                 } ],
+                layout: {
+                    autosize: this.props.responsive,
+                    showlegend: this.props.showLegend
+                },
                 type: this.props.chartType
             });
         }
@@ -95,7 +103,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             if (this.props.dataSourceType === "xpath") {
                 this.fetchByXPath(mxObject);
             } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
-                // this.fetchByMicroflow(mxObject.getGuid());
+                this.fetchByMicroflow(mxObject.getGuid());
             }
         }
     }
@@ -109,12 +117,27 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             callback: mxObjects => this.processData(mxObjects),
             error: error => {
                 mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
-                this.setState({ data: [], labels: [] });
+                this.setState({ values: [], labels: [] });
             },
             filter: {
                 sort: [ [ this.props.sortAttribute, "asc" ] ]
             },
             xpath
+        });
+    }
+
+    private fetchByMicroflow(guid: string) {
+        const actionname = this.props.dataSourceMicroflow;
+        mx.ui.action(actionname, {
+            callback: mxObjects => this.processData(mxObjects as mendix.lib.MxObject[]),
+            error: error => {
+                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
+                this.setState({ values: [], labels: [] });
+            },
+            params: {
+                applyto: "selection",
+                guids: [ guid ]
+            }
         });
     }
 
@@ -126,8 +149,8 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             this.labels.push(value.get(this.props.nameAttribute) as string);
         });
         this.setState({
-            data: this.data,
-            labels: this.labels
+            labels: this.labels,
+            values: this.data
         });
     }
 }
