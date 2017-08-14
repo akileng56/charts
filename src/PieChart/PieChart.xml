@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <widget id="com.mendix.widget.custom.PieChart.PieChart" needsEntityContext="true" offlineCapable="true" xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../xsd/widget.xsd">
     <name>Pie chart</name>
-    <description>Create Pie chart</description>
+    <description>Renders a pie or donut chart</description>
     <icon/>
     <properties>
         <property key="chartType" type="enumeration" defaultValue="pie">
             <caption>Chart type</caption>
             <category>Appearance</category>
-            <description></description>
+            <description>Type of chart</description>
                 <enumerationValues>
                     <enumerationValue key="pie">Pie</enumerationValue>
                     <enumerationValue key="donut">Donut</enumerationValue>
