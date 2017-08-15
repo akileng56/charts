@@ -22,7 +22,7 @@ interface PieChartContainerProps extends WrapperProps {
     valueAttribute: string;
     sortAttribute: string;
     chartType: ChartType;
-    color: string;
+    colorAttribute: string;
     showToolBar: boolean;
     showLegend: boolean;
     responsive: boolean;
@@ -34,20 +34,23 @@ interface PieChartContainerProps extends WrapperProps {
 
 interface PieChartContainerState {
     alertMessage?: string;
+    colors?: string[];
     labels?: string[];
     values?: number[];
 }
 
 export default class PieChartContainer extends Component<PieChartContainerProps, PieChartContainerState> {
     private subscriptionHandles: number[] = [];
-    private data: number[] = [];
+    private values: number[] = [];
     private labels: string[] = [];
+    private colors: string[] = [];
 
     constructor(props: PieChartContainerProps) {
         super(props);
 
         this.state = {
             alertMessage: PieChartContainer.validateProps(this.props),
+            colors: [],
             labels: [],
             values: []
         };
@@ -71,6 +74,9 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
                     hole: this.props.chartType === "donut" ? .4 : 0,
                     hoverinfo: "label",
                     labels: this.state.labels,
+                    marker: {
+                        colors: this.state.colors
+                    },
                     type: "pie",
                     values: this.state.values
                 } ],
@@ -141,6 +147,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
     }
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
+        this.colors = []; this.labels = []; this.values = [];
         if (mxObject && this.props.dataEntity) {
             if (this.props.dataSourceType === "xpath") {
                 this.fetchByXPath(mxObject);
@@ -159,7 +166,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             callback: mxObjects => this.processData(mxObjects),
             error: error => {
                 mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
-                this.setState({ values: [], labels: [] });
+                this.setState({ values: [], labels: [], colors: [] });
             },
             filter: {
                 sort: [ [ this.props.sortAttribute, "asc" ] ]
@@ -174,7 +181,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             callback: mxObjects => this.processData(mxObjects as mendix.lib.MxObject[]),
             error: error => {
                 mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
-                this.setState({ values: [], labels: [] });
+                this.setState({ values: [], labels: [], colors: [] });
             },
             params: {
                 applyto: "selection",
@@ -184,15 +191,15 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
     }
 
     private processData(mxObjects: mendix.lib.MxObject[]) {
-        this.data = [];
-        this.labels = [];
         mxObjects.map(value => {
-            this.data.push(parseFloat(value.get(this.props.valueAttribute) as string));
+            this.values.push(parseFloat(value.get(this.props.valueAttribute) as string));
             this.labels.push(value.get(this.props.nameAttribute) as string);
+            this.colors.push(value.get(this.props.colorAttribute) as string);
         });
         this.setState({
+            colors: this.colors,
             labels: this.labels,
-            values: this.data
+            values: this.values
         });
     }
 }

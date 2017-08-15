@@ -69,7 +69,7 @@
                     <enumerationValue key="donut">Donut</enumerationValue>
                 </enumerationValues>
         </property>
-       <property key="color" type="attribute" entityProperty="dataEntity" required="false">
+       <property key="colorAttribute" type="attribute" entityProperty="dataEntity" required="false">
             <caption>Color attribute</caption>
             <category>Appearance</category>
             <description/>
