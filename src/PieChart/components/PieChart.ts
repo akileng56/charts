@@ -34,7 +34,7 @@ export class PieChart extends Component<PieChartProps, {}> {
 
     render() {
         return createElement("div", {
-            className: classNames("widget-pie-chart"),
+            className: classNames(`widget-${this.props.type}-chart`),
             ref: this.getPlotlyNodeRef
         });
     }

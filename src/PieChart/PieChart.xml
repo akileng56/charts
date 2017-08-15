@@ -10,7 +10,7 @@
             <description>The entity from which the data values will be retrieved</description>
         </property>
         <property key="dataSourceType" type="enumeration" defaultValue="xpath">
-            <caption>Data Source</caption>
+            <caption>Data source</caption>
             <category>Data source</category>
             <description/>
             <enumerationValues>

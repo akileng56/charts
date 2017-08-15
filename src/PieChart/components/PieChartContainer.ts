@@ -1,5 +1,6 @@
 import { Component, createElement } from "react";
 
+import { Alert } from "../../components/Alert";
 import { PieChart } from "./PieChart";
 
 export type ChartType = "pie" | "donut";
@@ -32,8 +33,9 @@ interface PieChartContainerProps extends WrapperProps {
 }
 
 interface PieChartContainerState {
-    values?: number[];
+    alertMessage?: string;
     labels?: string[];
+    values?: number[];
 }
 
 export default class PieChartContainer extends Component<PieChartContainerProps, PieChartContainerState> {
@@ -45,6 +47,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         super(props);
 
         this.state = {
+            alertMessage: PieChartContainer.validateProps(this.props),
             labels: [],
             values: []
         };
@@ -53,6 +56,12 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
 
     render() {
         if (this.props.mxObject) {
+            if (this.state.alertMessage) {
+                return createElement(Alert, {
+                    className: `widget-${this.props.chartType}-chart-alert`,
+                    message: this.state.alertMessage
+                });
+            }
             return createElement(PieChart, {
                 config: {
                     displayModeBar: this.props.showToolBar
@@ -84,6 +93,15 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         if (this.subscriptionHandles) {
             this.subscriptionHandles.forEach(mx.data.unsubscribe);
         }
+    }
+
+    public static validateProps(props: PieChartContainerProps): string {
+        let errorMessage = "";
+        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
+            errorMessage += ` 'Data source' is set to 'Microflow' but 'Microflow' is missing \n`;
+        }
+
+        return errorMessage && `Configuration error in ${props.chartType}chart:\n\n ${errorMessage}`;
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
