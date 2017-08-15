@@ -36,6 +36,7 @@ export class PieChart extends Component<PieChartProps, {}> {
 
         this.plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
+        this.onResize = this.onResize.bind(this);
     }
 
     render() {
@@ -51,6 +52,7 @@ export class PieChart extends Component<PieChartProps, {}> {
 
     componentDidMount() {
         this.renderChart(this.props);
+        this.setUpEvents();
         this.adjustStyle();
     }
 
@@ -62,6 +64,7 @@ export class PieChart extends Component<PieChartProps, {}> {
         if (this.pieChart) {
             this.plotly.purge(this.pieChart);
         }
+        window.removeEventListener("resize", this.onResize);
     }
 
     private getPlotlyNodeRef(node: HTMLDivElement) {
@@ -73,6 +76,18 @@ export class PieChart extends Component<PieChartProps, {}> {
 
         if (this.pieChart) {
             this.plotly.newPlot(this.pieChart, data && data.length ? data : this.data, layout, config);
+        }
+    }
+
+    private setUpEvents() {
+        // A workaround for attaching the resize event to the Iframe window because the plotly
+        // library does not support it. This fix will be done in the web modeler preview class when the
+        // plotly library starts supporting listening to Iframe events.
+        const iFrame = document.getElementsByClassName("t-page-editor-iframe")[0] as HTMLIFrameElement;
+        if (iFrame) {
+            (iFrame.contentWindow || iFrame.contentDocument).addEventListener("resize", this.onResize);
+        } else {
+            window.addEventListener("resize", this.onResize);
         }
     }
 
@@ -98,5 +113,9 @@ export class PieChart extends Component<PieChartProps, {}> {
             style.height = `${this.props.height}%`;
         }
         return style;
+    }
+
+    private onResize() {
+        this.plotly.Plots.resize(this.pieChart);
     }
 }
