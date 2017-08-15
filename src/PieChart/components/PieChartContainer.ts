@@ -13,7 +13,7 @@ interface WrapperProps {
     readOnly: boolean;
 }
 
-interface PieChartContainerProps extends WrapperProps {
+export interface PieChartContainerProps extends WrapperProps {
     dataEntity: string;
     dataSourceType: "xpath" | "microflow";
     entityConstraint: string;
