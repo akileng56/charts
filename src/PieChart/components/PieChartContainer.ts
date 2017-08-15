@@ -63,6 +63,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
                 });
             }
             return createElement(PieChart, {
+                className: this.props.class,
                 config: {
                     displayModeBar: this.props.showToolBar
                 },
@@ -73,11 +74,16 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
                     type: "pie",
                     values: this.state.values
                 } ],
+                height: this.props.height,
+                heightUnit: this.props.heightUnit,
                 layout: {
                     autosize: this.props.responsive,
                     showlegend: this.props.showLegend
                 },
-                type: this.props.chartType
+                style: PieChartContainer.parseStyle(this.props.style),
+                type: this.props.chartType,
+                width: this.props.width,
+                widthUnit: this.props.widthUnit
             });
         }
 
@@ -93,6 +99,24 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         if (this.subscriptionHandles) {
             this.subscriptionHandles.forEach(mx.data.unsubscribe);
         }
+    }
+
+    public static parseStyle(style = ""): { [key: string]: string } {
+        try {
+            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
+                const pair = line.split(":");
+                if (pair.length === 2) {
+                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
+                    styleObject[name] = pair[1].trim();
+                }
+                return styleObject;
+            }, {});
+        } catch (error) {
+            // tslint:disable-next-line no-console
+            console.log("Failed to parse style", style, error);
+        }
+
+        return {};
     }
 
     public static validateProps(props: PieChartContainerProps): string {
