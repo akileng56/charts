@@ -1,7 +1,5 @@
 import { Component, createElement } from "react";
 
-import { BarData } from "plotly.js";
-
 import { BarChart } from "./components/BarChart";
 import BarChartContainer, { BarChartContainerProps } from "./components/BarChartContainer";
 import { Alert } from "../components/Alert";
@@ -12,7 +10,7 @@ type VisibilityMap = {
 
 // tslint:disable-next-line class-name
 export class preview extends Component<BarChartContainerProps, {}> {
-    private data: BarData[] = [
+    private data: any[] = [
         {
             type: "bar",
             x: [ "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7" ],

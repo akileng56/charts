@@ -1,13 +1,13 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
 
-import { BarData, BarLayout, Config, PlotlyStatic } from "plotly.js";
+// import { BarData, BarLayout, Config } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
 
 interface BarChartProps {
-    data?: BarData[];
-    layout?: Partial<BarLayout>;
-    config?: Partial<Config>;
+    data?: Plotly.ScatterData[];
+    layout?: Partial<Plotly.Layout>;
+    config?: Partial<Plotly.Config>;
     className?: string;
     width: number;
     widthUnit: string;
@@ -18,8 +18,7 @@ interface BarChartProps {
 
 export class BarChart extends Component<BarChartProps, {}> {
     private plotlyNode: HTMLDivElement;
-    private Plotly: PlotlyStatic;
-    private data: BarData[] = [
+    private data: any = [
         {
             type: "bar",
             x: [ "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7" ],
@@ -30,7 +29,6 @@ export class BarChart extends Component<BarChartProps, {}> {
     constructor(props: BarChartProps) {
         super(props);
 
-        this.Plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -58,7 +56,7 @@ export class BarChart extends Component<BarChartProps, {}> {
 
     componentWillUnmount() {
         if (this.plotlyNode) {
-            this.Plotly.purge(this.plotlyNode);
+            Plotly.purge(this.plotlyNode);
         }
         window.removeEventListener("resize", this.onResize);
     }
@@ -92,7 +90,7 @@ export class BarChart extends Component<BarChartProps, {}> {
     private renderChart(props: BarChartProps) {
         const { config, data, layout } = props;
         if (this.plotlyNode) {
-            this.Plotly.newPlot(this.plotlyNode, data && data.length ? data : this.data, layout, config);
+            Plotly.newPlot(this.plotlyNode, data && data.length ? data : this.data, layout, config);
         }
     }
 
@@ -111,6 +109,6 @@ export class BarChart extends Component<BarChartProps, {}> {
     }
 
     private onResize() {
-        this.Plotly.Plots.resize(this.plotlyNode);
+        Plotly.Plots.resize(this.plotlyNode);
     }
 }
