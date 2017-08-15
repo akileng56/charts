@@ -1,7 +1,6 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
 
-// import { BarData, BarLayout, Config } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
 
 interface BarChartProps {
@@ -18,7 +17,7 @@ interface BarChartProps {
 
 export class BarChart extends Component<BarChartProps, {}> {
     private plotlyNode: HTMLDivElement;
-    private data: any = [
+    private data: Partial<Plotly.ScatterData>[] = [ // tslint:disable-line
         {
             type: "bar",
             x: [ "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7" ],

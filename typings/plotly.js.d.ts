@@ -7,6 +7,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.3
 
+<<<<<<< HEAD
 // tslint:disable max-line-length no-namespace
 /// <reference types="d3" />
 
@@ -80,6 +81,11 @@ declare namespace Plotly {
         width: number;
         height: number;
         filename: string;
+=======
+declare module "plotly.js" {
+    interface BarLayout extends Layout {
+        barmode: BarMode;
+>>>>>>> Remove unused file
     }
 
     export type Root = string | HTMLElement;

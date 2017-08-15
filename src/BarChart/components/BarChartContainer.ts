@@ -1,9 +1,8 @@
 import { Component, createElement } from "react";
 
-import { BarMode, Datum, ScatterData } from "plotly.js";
-
-import { Alert } from "../../components/Alert";
 import { BarChart } from "./BarChart";
+import { Alert } from "../../components/Alert";
+import { BarMode, Datum, ScatterData } from "plotly.js";
 
 export interface WrapperProps {
     class?: string;
@@ -219,14 +218,14 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
             };
         });
 
-        const barData: any = {
+        const barData: Partial<ScatterData> = {
             name: seriesName,
             type: "bar",
             x: fetchedData.map(value => value.x),
             y: fetchedData.map(value => value.y)
         };
 
-        this.addSeries(barData, seriesCount === index + 1);
+        this.addSeries(barData as ScatterData, seriesCount === index + 1);
 
     }
 

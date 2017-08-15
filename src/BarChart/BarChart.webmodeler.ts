@@ -1,8 +1,9 @@
 import { Component, createElement } from "react";
 
+import { Alert } from "../components/Alert";
 import { BarChart } from "./components/BarChart";
 import BarChartContainer, { BarChartContainerProps } from "./components/BarChartContainer";
-import { Alert } from "../components/Alert";
+import { ScatterData } from "plotly.js";
 
 type VisibilityMap = {
     [ P in keyof BarChartContainerProps ]: boolean;
@@ -10,7 +11,7 @@ type VisibilityMap = {
 
 // tslint:disable-next-line class-name
 export class preview extends Component<BarChartContainerProps, {}> {
-    private data: any[] = [
+    private data: Partial<ScatterData>[] = [ // tslint:disable-line
         {
             type: "bar",
             x: [ "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7" ],
@@ -28,7 +29,7 @@ export class preview extends Component<BarChartContainerProps, {}> {
                 config: {
                     displayModeBar: this.props.showToolbar
                 },
-                data: this.data,
+                data: this.data as ScatterData[],
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
                 layout: {
