@@ -1,7 +1,10 @@
+import { Datum, ScatterLine, ScatterMarker } from "plotly.js";
+
 // tslint:disable-next-line
+export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines"| "text+lines+markers" | "none";
+
 export default ModelProps;
 
-export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+markers" | "text+lines"| "text+lines+markers" | "none";
 export interface ModelProps {
     seriesEntity: string;
     seriesNameAttribute: string;
@@ -26,3 +29,19 @@ export interface ModelProps {
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
 }
 
+export interface LineData {
+    type: "scatter" | "scattergl";
+    x: Datum[];
+    y: Datum[];
+    text?: string | string[];
+    line?: Partial<ScatterLine>;
+    marker?: Partial<ScatterMarker>;
+    mode: Mode;
+    hoveron?: "points" | "fills";
+    hoverinfo?: "text";
+    fill?: "none" | "tozeroy" | "tozerox" | "tonexty" | "tonextx" | "toself" | "tonext";
+    fillcolor?: string;
+    legendgroup?: string;
+    name?: string;
+    connectgaps?: boolean;
+}

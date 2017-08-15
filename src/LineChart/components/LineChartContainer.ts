@@ -1,11 +1,11 @@
 import { Component, createElement } from "react";
 
-import { Datum, ScatterData } from "plotly.js";
+import { Datum } from "plotly.js";
 import { Alert } from "./../../components/Alert";
 import { LineChart } from "./LineChart";
-import { Mode, ModelProps } from "../LineChart";
+import { LineData, Mode, ModelProps } from "../LineChart";
 
-export interface LineChartContainerProps extends ModelProps {
+interface WrapperProps {
     class?: string;
     mxform: mxui.lib.form._FormBase;
     mxObject?: mendix.lib.MxObject;
@@ -13,14 +13,16 @@ export interface LineChartContainerProps extends ModelProps {
     readOnly: boolean;
 }
 
+export type LineChartContainerProps = ModelProps & WrapperProps;
+
 interface LineChartContainerState {
     alertMessage?: string;
-    data?: ScatterData[];
+    data?: LineData[];
 }
 
 export default class LineChartContainer extends Component<LineChartContainerProps, LineChartContainerState> {
     private subscriptionHandles: number[] = [];
-    private data: ScatterData[] = [];
+    private data: LineData[] = [];
 
     constructor(props: LineChartContainerProps) {
         super(props);
@@ -117,6 +119,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
     }
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
+        this.data = [];
         if (mxObject && this.props.seriesEntity) {
             if (this.props.dataSourceType === "xpath") {
                 this.fetchByXPath(mxObject);
@@ -175,7 +178,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
                             };
                         });
 
-                        const lineData: ScatterData = {
+                        const lineData: LineData = {
                             connectgaps: true,
                             line: {
                                 color: lineColor
@@ -203,7 +206,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         });
     }
 
-    private addData(seriesData: ScatterData, isFinal = false) {
+    private addData(seriesData: LineData, isFinal = false) {
         this.data.push(seriesData);
         if (isFinal) {
             this.setState({ data: this.data });

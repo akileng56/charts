@@ -1,13 +1,15 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
-import { Config, LineLayout, PlotlyStatic, ScatterData } from "plotly.js";
 
-declare function require(name: string): string;
+import { Config, Layout, PlotlyStatic } from "plotly.js";
+import * as Plotly from "plotly.js/dist/plotly";
+
+import { LineData } from "../LineChart";
 
 interface LineChartProps {
-    data?: ScatterData[];
+    data?: LineData[];
     config?: Partial<Config>;
-    layout?: Partial<LineLayout>;
+    layout?: Partial<Layout>;
     width: number;
     widthUnit: string;
     height: number;
@@ -19,7 +21,7 @@ interface LineChartProps {
 class LineChart extends Component<LineChartProps, {}> {
     private lineChart: HTMLDivElement;
     private Plotly: PlotlyStatic;
-    private data: ScatterData[] = [
+    private data: LineData[] = [
         {
             connectgaps: true,
             mode: "lines+markers",
@@ -33,7 +35,7 @@ class LineChart extends Component<LineChartProps, {}> {
     constructor(props: LineChartProps) {
         super(props);
 
-        this.Plotly = require("plotly.js/dist/plotly") as any;
+        this.Plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }

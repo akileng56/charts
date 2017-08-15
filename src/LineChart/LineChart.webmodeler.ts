@@ -1,9 +1,9 @@
 import { Component, createElement } from "react";
 
-import { ScatterData } from "plotly.js";
 import { LineChart } from "./components/LineChart";
 import LineChartContainer, { LineChartContainerProps } from "./components/LineChartContainer";
 import { Alert } from "../components/Alert";
+import { LineData } from "./LineChart";
 
 declare function require(name: string): string;
 
@@ -13,7 +13,7 @@ type VisibilityMap = {
 
 // tslint:disable-next-line class-name
 export class preview extends Component<LineChartContainerProps, {}> {
-    private data: ScatterData[] = [
+    private data: LineData[] = [
         {
             connectgaps: true,
             mode: "lines+markers",
