@@ -39,6 +39,7 @@
     "enzyme": "^2.8.2",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
+    "fs": "0.0.2",
     "grunt": "1.0.1",
     "grunt-check-dependencies": "^1.0.0",
     "grunt-contrib-clean": "^1.0.0",
@@ -82,7 +83,6 @@
   },
   "dependencies": {
     "classnames": "^2.2.5",
-    "fs": "0.0.2",
-    "plotly.js": "^1.27.1"
+    "plotly.js": "^1.29.3"
   }
 }
