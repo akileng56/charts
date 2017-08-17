@@ -3,7 +3,7 @@ import { Component, createElement } from "react";
 import { Alert } from "../../components/Alert";
 import { PieChart } from "./PieChart";
 
-export type ChartType = "pie" | "donut";
+export type ChartType = "pie" | "doughnut";
 
 interface WrapperProps {
     class?: string;
@@ -15,12 +15,11 @@ interface WrapperProps {
 
 export interface PieChartContainerProps extends WrapperProps {
     dataEntity: string;
-    dataSourceType: "xpath" | "microflow";
+    dataSourceType: "XPath" | "microflow";
     entityConstraint: string;
     dataSourceMicroflow: string;
     nameAttribute: string;
     valueAttribute: string;
-    sortAttribute: string;
     chartType: ChartType;
     colorAttribute: string;
     showToolBar: boolean;
@@ -40,10 +39,7 @@ interface PieChartContainerState {
 }
 
 export default class PieChartContainer extends Component<PieChartContainerProps, PieChartContainerState> {
-    private subscriptionHandles: number[] = [];
-    private values: number[] = [];
-    private labels: string[] = [];
-    private colors: string[] = [];
+    private subscriptionHandle: number;
 
     constructor(props: PieChartContainerProps) {
         super(props);
@@ -61,22 +57,19 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         if (this.props.mxObject) {
             if (this.state.alertMessage) {
                 return createElement(Alert, {
+                    bootstrapStyle: "danger",
                     className: `widget-${this.props.chartType}-chart-alert`,
                     message: this.state.alertMessage
                 });
             }
             return createElement(PieChart, {
                 className: this.props.class,
-                config: {
-                    displayModeBar: this.props.showToolBar
-                },
+                config: { displayModeBar: this.props.showToolBar },
                 data: [ {
-                    hole: this.props.chartType === "donut" ? .4 : 0,
+                    hole: this.props.chartType === "doughnut" ? .4 : 0,
                     hoverinfo: "label",
                     labels: this.state.labels,
-                    marker: {
-                        colors: this.state.colors
-                    },
+                    marker: { colors: this.state.colors },
                     type: "pie",
                     values: this.state.values
                 } ],
@@ -98,13 +91,87 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
 
     componentWillReceiveProps(newProps: PieChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
-        this.fetchData(newProps.mxObject);
+        this.fetchData();
     }
 
     componentWillUnmount() {
-        if (this.subscriptionHandles) {
-            this.subscriptionHandles.forEach(mx.data.unsubscribe);
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
         }
+    }
+
+    private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
+        }
+
+        if (mxObject) {
+            this.subscriptionHandle = window.mx.data.subscribe({
+                callback: this.fetchData,
+                guid: mxObject.getGuid()
+            });
+        }
+    }
+
+    private fetchData() {
+        if (this.props.mxObject && this.props.dataEntity) {
+            if (this.props.dataSourceType === "XPath") {
+                this.fetchByXPath(this.props.mxObject);
+            } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
+                this.fetchByMicroflow(this.props.mxObject.getGuid());
+            }
+        }
+    }
+
+    private fetchByXPath(mxObject: mendix.lib.MxObject) {
+        const constraint = this.props.entityConstraint
+            ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
+            : "";
+        const xpath = "//" + this.props.dataEntity + constraint;
+        window.mx.data.get({
+            callback: this.processData,
+            error: error => {
+                mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
+                this.setState({ values: [], labels: [], colors: [] });
+            },
+            xpath
+        });
+    }
+
+    private fetchByMicroflow(guid: string) {
+        const actionname = this.props.dataSourceMicroflow;
+        mx.ui.action(actionname, {
+            callback: this.processData,
+            error: error => {
+                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
+                this.setState({ values: [], labels: [], colors: [] });
+            },
+            params: {
+                applyto: "selection",
+                guids: [ guid ]
+            }
+        });
+    }
+
+    private processData(mxObjects: mendix.lib.MxObject[]) {
+        const colors: string[] = [];
+        const values: number[] = [];
+        const labels: string[] = [];
+        mxObjects.map(value => {
+            values.push(parseFloat(value.get(this.props.valueAttribute) as string));
+            labels.push(value.get(this.props.nameAttribute) as string);
+            colors.push(value.get(this.props.colorAttribute) as string);
+        });
+        this.setState({ colors, labels, values });
+    }
+
+    public static validateProps(props: PieChartContainerProps): string {
+        let errorMessage = "";
+        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
+            errorMessage += ` 'Data source' is set to 'Microflow' but 'Microflow' is missing \n`;
+        }
+
+        return errorMessage && `Configuration error in ${props.chartType}chart:\n\n ${errorMessage}`;
     }
 
     public static parseStyle(style = ""): { [key: string]: string } {
@@ -123,83 +190,5 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
         }
 
         return {};
-    }
-
-    public static validateProps(props: PieChartContainerProps): string {
-        let errorMessage = "";
-        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
-            errorMessage += ` 'Data source' is set to 'Microflow' but 'Microflow' is missing \n`;
-        }
-
-        return errorMessage && `Configuration error in ${props.chartType}chart:\n\n ${errorMessage}`;
-    }
-
-    private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
-        this.subscriptionHandles.forEach(mx.data.unsubscribe);
-        this.subscriptionHandles = [];
-
-        if (mxObject) {
-            this.subscriptionHandles.push(mx.data.subscribe({
-                callback: () => this.fetchData(mxObject),
-                guid: mxObject.getGuid()
-            }));
-        }
-    }
-
-    private fetchData(mxObject?: mendix.lib.MxObject) {
-        this.colors = []; this.labels = []; this.values = [];
-        if (mxObject && this.props.dataEntity) {
-            if (this.props.dataSourceType === "xpath") {
-                this.fetchByXPath(mxObject);
-            } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
-                this.fetchByMicroflow(mxObject.getGuid());
-            }
-        }
-    }
-
-    private fetchByXPath(mxObject: mendix.lib.MxObject) {
-        const constraint = this.props.entityConstraint
-            ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
-            : "";
-        const xpath = "//" + this.props.dataEntity + constraint;
-        window.mx.data.get({
-            callback: mxObjects => this.processData(mxObjects),
-            error: error => {
-                mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
-                this.setState({ values: [], labels: [], colors: [] });
-            },
-            filter: {
-                sort: [ [ this.props.sortAttribute, "asc" ] ]
-            },
-            xpath
-        });
-    }
-
-    private fetchByMicroflow(guid: string) {
-        const actionname = this.props.dataSourceMicroflow;
-        mx.ui.action(actionname, {
-            callback: mxObjects => this.processData(mxObjects as mendix.lib.MxObject[]),
-            error: error => {
-                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
-                this.setState({ values: [], labels: [], colors: [] });
-            },
-            params: {
-                applyto: "selection",
-                guids: [ guid ]
-            }
-        });
-    }
-
-    private processData(mxObjects: mendix.lib.MxObject[]) {
-        mxObjects.map(value => {
-            this.values.push(parseFloat(value.get(this.props.valueAttribute) as string));
-            this.labels.push(value.get(this.props.nameAttribute) as string);
-            this.colors.push(value.get(this.props.colorAttribute) as string);
-        });
-        this.setState({
-            colors: this.colors,
-            labels: this.labels,
-            values: this.values
-        });
     }
 }

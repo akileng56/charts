@@ -1,10 +1,10 @@
 import { Component, createElement } from "react";
 
+import { PieData } from "plotly.js";
+
+import { Alert } from "../components/Alert";
 import { PieChart } from "./components/PieChart";
 import PieChartContainer, { PieChartContainerProps } from "./components/PieChartContainer";
-import { Alert } from "../components/Alert";
-
-declare function require(name: string): string;
 
 type VisibilityMap = {
     [P in keyof PieChartContainerProps]: boolean;
@@ -15,21 +15,13 @@ export class preview extends Component<PieChartContainerProps, {}> {
     render() {
         return createElement("div", {},
             createElement(Alert, {
+                bootstrapStyle: "danger",
                 className: `widget-${this.props.chartType}-chart-alert`,
                 message: PieChartContainer.validateProps(this.props)
             }),
             createElement(PieChart, {
-                config: {
-                    displayModeBar: this.props.showToolBar
-                },
-                data: [ {
-                    hole: this.props.chartType === "donut" ? .4 : 0,
-                    hoverinfo: "label+name",
-                    labels: [ "Apples", "Mangoes", "Jackfruit", "Oranges" ],
-                    name: "Fruits",
-                    type: "pie",
-                    values: [ 16, 15, 12, 42 ]
-                } ],
+                config: { displayModeBar: this.props.showToolBar },
+                data: [ this.getDefaultData(this.props.chartType) ],
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
                 layout: {
@@ -43,6 +35,17 @@ export class preview extends Component<PieChartContainerProps, {}> {
             })
         );
     }
+
+    private getDefaultData(chartType: string): PieData {
+        return {
+            hole: chartType === "doughnut" ? .4 : 0,
+            hoverinfo: "label+name",
+            labels: [ "Apples", "Mangoes", "Jackfruit", "Oranges" ],
+            name: "Fruits",
+            type: "pie",
+            values: [ 16, 15, 12, 42 ]
+        };
+    }
 }
 
 export function getPreviewCss() {
@@ -50,7 +53,7 @@ export function getPreviewCss() {
 }
 
 export function getVisibleProperties(valueMap: PieChartContainerProps, visibilityMap: VisibilityMap) {
-    if (valueMap.dataSourceType === "xpath") {
+    if (valueMap.dataSourceType === "XPath") {
         visibilityMap.entityConstraint = true;
         visibilityMap.dataSourceMicroflow = false;
     } else if (valueMap.dataSourceType === "microflow") {

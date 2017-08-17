@@ -9,12 +9,12 @@
             <category>Data source</category>
             <description>The entity from which the data values will be retrieved</description>
         </property>
-        <property key="dataSourceType" type="enumeration" defaultValue="xpath">
+        <property key="dataSourceType" type="enumeration" defaultValue="XPath">
             <caption>Data source</caption>
             <category>Data source</category>
             <description/>
             <enumerationValues>
-                <enumerationValue key="xpath">Database / XPath</enumerationValue>
+                <enumerationValue key="XPath">Database / XPath</enumerationValue>
                 <enumerationValue key="microflow">Microflow</enumerationValue>
             </enumerationValues>
         </property>
@@ -32,7 +32,7 @@
         <property key="nameAttribute" type="attribute" entityProperty="dataEntity">
             <caption>Name attribute</caption>
             <category>Data source</category>
-            <description>Attribute containing the name to describing the value</description>
+            <description>Attribute containing the name describing the value</description>
             <attributeTypes>
                 <attributeType name="String"/>
             </attributeTypes>
@@ -47,29 +47,16 @@
                 <attributeType name="Long"/>
             </attributeTypes>
         </property>
-        <property key="sortAttribute" type="attribute" entityProperty="dataEntity">
-            <caption>Value sort attribute</caption>
-            <category>Data source</category>
-            <description>Attribute to use for sorting the data vales</description>
-            <attributeTypes>
-                <attributeType name="Decimal"/>
-                <attributeType name="Long"/>
-                <attributeType name="Integer"/>
-                <attributeType name="String"/>
-                <attributeType name="AutoNumber"/>
-                <attributeType name="DateTime"/>
-            </attributeTypes>
-        </property>
         <property key="chartType" type="enumeration" defaultValue="pie">
             <caption>Chart type</caption>
             <category>Appearance</category>
             <description>Type of chart</description>
                 <enumerationValues>
                     <enumerationValue key="pie">Pie</enumerationValue>
-                    <enumerationValue key="donut">Donut</enumerationValue>
+                    <enumerationValue key="doughnut">Doughnut</enumerationValue>
                 </enumerationValues>
         </property>
-       <property key="colorAttribute" type="attribute" entityProperty="dataEntity" required="false">
+        <property key="colorAttribute" type="attribute" entityProperty="dataEntity" required="false">
             <caption>Color attribute</caption>
             <category>Appearance</category>
             <description/>

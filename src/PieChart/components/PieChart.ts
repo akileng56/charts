@@ -1,7 +1,7 @@
-import { Component, createElement } from "react";
+import { CSSProperties, Component, createElement } from "react";
 
 import * as classNames from "classnames";
-import { Config, Layout, PieData, PlotlyStatic } from "plotly.js";
+import { Config, Layout, PieData } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
 
 import { ChartType } from "./PieChartContainer";
@@ -16,14 +16,13 @@ interface PieChartProps {
     height: number;
     heightUnit: string;
     className?: string;
-    style?: object;
+    style?: CSSProperties;
 }
 
 export class PieChart extends Component<PieChartProps, {}> {
-    private pieChart: HTMLDivElement;
-    private plotly: PlotlyStatic;
+    private pieChartNode: HTMLDivElement;
     private data: PieData[] = [ {
-        hole: this.props.type === "donut" ? .4 : 0,
+        hole: this.props.type === "doughnut" ? .4 : 0,
         hoverinfo: "label+name",
         labels: [ "US", "China", "European Union", "Russian Federation", "Brazil", "India", "Rest of World" ],
         name: "GHG Emissions",
@@ -34,7 +33,6 @@ export class PieChart extends Component<PieChartProps, {}> {
     constructor(props: PieChartProps) {
         super(props);
 
-        this.plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -43,17 +41,13 @@ export class PieChart extends Component<PieChartProps, {}> {
         return createElement("div", {
             className: classNames(`widget-${this.props.type}-chart`, this.props.className),
             ref: this.getPlotlyNodeRef,
-            style: {
-                ...this.getStyle(),
-                ...this.props.style
-            }
+            style: { ...this.getStyle(), ...this.props.style }
         });
     }
 
     componentDidMount() {
         this.renderChart(this.props);
         this.setUpEvents();
-        this.adjustStyle();
     }
 
     componentWillReceiveProps(newProps: PieChartProps) {
@@ -61,21 +55,25 @@ export class PieChart extends Component<PieChartProps, {}> {
     }
 
     componentWillUnmount() {
-        if (this.pieChart) {
-            this.plotly.purge(this.pieChart);
+        if (this.pieChartNode) {
+            Plotly.purge(this.pieChartNode);
         }
         window.removeEventListener("resize", this.onResize);
     }
 
     private getPlotlyNodeRef(node: HTMLDivElement) {
-        this.pieChart = node;
+        this.pieChartNode = node;
     }
 
     private renderChart(props: PieChartProps) {
         const { data, config, layout } = props;
 
-        if (this.pieChart) {
-            this.plotly.newPlot(this.pieChart, data && data.length ? data : this.data, layout, config);
+        if (this.pieChartNode) {
+            if (data.values && data.values.length) {
+                Plotly.newPlot(this.pieChartNode, data, layout, config);
+            } else {
+                Plotly.newPlot(this.pieChartNode, this.data, layout, config);
+            }
         }
     }
 
@@ -91,31 +89,22 @@ export class PieChart extends Component<PieChartProps, {}> {
         }
     }
 
-    private adjustStyle() {
-        if (this.pieChart) {
-            const wrapperElement = this.pieChart.parentElement;
-            if (this.props.heightUnit === "percentageOfParent" && wrapperElement) {
-                wrapperElement.style.height = "100%";
-                wrapperElement.style.width = "100%";
-            }
-        }
-    }
-
-    private getStyle(): object {
+    private getStyle(): CSSProperties {
         const style: { paddingBottom?: string; width: string, height?: string } = {
             width: this.props.widthUnit === "percentage" ? `${this.props.width}%` : `${this.props.width}`
         };
         if (this.props.heightUnit === "percentageOfWidth") {
             style.paddingBottom = `${this.props.height}%`;
         } else if (this.props.heightUnit === "pixels") {
-            style.paddingBottom = `${this.props.height}`;
+            style.paddingBottom = `${this.props.height}px`;
         } else if (this.props.heightUnit === "percentageOfParent") {
             style.height = `${this.props.height}%`;
         }
+
         return style;
     }
 
     private onResize() {
-        this.plotly.Plots.resize(this.pieChart);
+        Plotly.Plots.resize(this.pieChartNode);
     }
 }
