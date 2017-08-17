@@ -139,6 +139,7 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
     }
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
+        this.data = [];
         if (mxObject && this.props.seriesEntity) {
             if (this.props.dataSourceType === "xpath") {
                 this.fetchByXpath(mxObject);
