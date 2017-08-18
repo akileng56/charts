@@ -22,13 +22,12 @@ export class preview extends Component<BarChartContainerProps, {}> {
     render() {
         return createElement("div", {},
             createElement(Alert, {
+                bootstrapStyle: "danger",
                 className: "widget-bar-chart-alert",
                 message: BarChartContainer.validateProps(this.props)
             }),
             createElement(BarChart, {
-                config: {
-                    displayModeBar: this.props.showToolbar
-                },
+                config: { displayModeBar: this.props.showToolbar },
                 data: this.data as ScatterData[],
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
@@ -50,13 +49,11 @@ export class preview extends Component<BarChartContainerProps, {}> {
 }
 
 export function getPreviewCss() {
-    return (
-        require("plotly.js/src/css/style.scss")
-    );
+    return (require("plotly.js/src/css/style.scss"));
 }
 
 export function getVisibleProperties(valueMap: BarChartContainerProps, visibilityMap: VisibilityMap) {
-    if (valueMap.dataSourceType === "xpath") {
+    if (valueMap.dataSourceType === "XPath") {
         visibilityMap.entityConstraint = true;
         visibilityMap.dataSourceMicroflow = false;
     } else if (valueMap.dataSourceType === "microflow") {

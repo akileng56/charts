@@ -1,22 +1,25 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
 
+import { HeightUnit, WidthUnit } from "./BarChartContainer";
 import * as Plotly from "plotly.js/dist/plotly";
 
 interface BarChartProps {
-    data?: Plotly.ScatterData[];
-    layout?: Partial<Plotly.Layout>;
     config?: Partial<Plotly.Config>;
     className?: string;
-    width: number;
-    widthUnit: string;
+    data?: Plotly.ScatterData[];
     height: number;
-    heightUnit: string;
+    heightUnit: HeightUnit;
+    layout?: Partial<Plotly.Layout>;
     style?: object;
+    width: number;
+    widthUnit: WidthUnit;
 }
 
 export class BarChart extends Component<BarChartProps, {}> {
+    private intervalID: number | null;
     private plotlyNode: HTMLDivElement;
+    private svg: SVGElement;
     private data: Partial<Plotly.ScatterData>[] = [ // tslint:disable-line
         {
             type: "bar",
@@ -37,8 +40,7 @@ export class BarChart extends Component<BarChartProps, {}> {
             className: classNames("widget-plotly-bar", this.props.className),
             ref: this.getPlotlyNodeRef,
             style: {
-                ...this.getStyle(),
-                ...this.props.style
+                ...this.getStyle(), ...this.props.style
             }
         });
     }
@@ -47,6 +49,7 @@ export class BarChart extends Component<BarChartProps, {}> {
         this.renderChart(this.props);
         this.setUpEvents();
         this.adjustStyle();
+        this.fixChartRendering();
     }
 
     componentWillReceiveProps(newProps: BarChartProps) {
@@ -104,10 +107,21 @@ export class BarChart extends Component<BarChartProps, {}> {
         } else if (this.props.heightUnit === "percentageOfParent") {
             style.height = `${this.props.height}%`;
         }
+
         return style;
     }
 
     private onResize() {
         Plotly.Plots.resize(this.plotlyNode);
+    }
+
+    private fixChartRendering() {
+        this.intervalID = setInterval(() => {
+            if (this.svg && this.svg.parentElement && this.svg.parentElement.offsetHeight !== 0 && this.intervalID) {
+                Plotly.Plots.resize(this.plotlyNode);
+                clearInterval(this.intervalID);
+                this.intervalID = null;
+            }
+        }, 100);
     }
 }

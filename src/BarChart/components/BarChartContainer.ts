@@ -2,7 +2,6 @@ import { Component, createElement } from "react";
 
 import { BarChart } from "./BarChart";
 import { Alert } from "../../components/Alert";
-import { BarMode, Datum, ScatterData } from "plotly.js";
 
 export interface WrapperProps {
     class?: string;
@@ -15,7 +14,7 @@ export interface WrapperProps {
 export interface BarChartContainerProps extends WrapperProps {
     barMode: BarMode;
     dataSourceMicroflow: string;
-    dataSourceType: "xpath" | "microflow";
+    dataSourceType: "XPath" | "microflow";
     entityConstraint: string;
     responsive: boolean;
     title?: string;
@@ -37,15 +36,16 @@ export interface BarChartContainerProps extends WrapperProps {
 
 interface BarChartContainerState {
     alertMessage?: string;
-    data?: ScatterData[];
+    data?: Plotly.ScatterData[];
 }
 
-type WidthUnit = "percentage" | "pixels";
-type HeightUnit = "percentageOfWidth" | "percentageOfParent" | "pixels";
+export type BarMode = "group" | "stack";
+export type HeightUnit = "percentageOfWidth" | "percentageOfParent" | "pixels";
+export type WidthUnit = "percentage" | "pixels";
 
 export default class BarChartContainer extends Component<BarChartContainerProps, BarChartContainerState> {
-    private subscriptionHandles: number[] = [];
-    private data: ScatterData[] = [];
+    private subscriptionHandle: number;
+    private data: Plotly.ScatterData[] = [];
 
     constructor(props: BarChartContainerProps) {
         super(props);
@@ -60,13 +60,15 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
     render() {
         if (this.props.mxObject) {
             if (this.state.alertMessage) {
-                return createElement(Alert, { className: "widget-bar-chart-alert", message: this.state.alertMessage });
+                return createElement(Alert, {
+                    bootstrapStyle: "danger",
+                    className: "widget-bar-chart-alert",
+                    message: this.state.alertMessage
+                });
             }
             return createElement(BarChart, {
                 className: this.props.class,
-                config: {
-                    displayModeBar: this.props.showToolbar
-                },
+                config: { displayModeBar: this.props.showToolbar },
                 data: this.state.data,
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
@@ -94,54 +96,27 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
     }
 
     componentWillUnmount() {
-        if (this.subscriptionHandles) {
-            this.subscriptionHandles.forEach(mx.data.unsubscribe);
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
         }
-    }
-
-    public static parseStyle(style = ""): { [key: string]: string } {
-        try {
-            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
-                const pair = line.split(":");
-                if (pair.length === 2) {
-                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
-                    styleObject[name] = pair[1].trim();
-                }
-                return styleObject;
-            }, {});
-        } catch (error) {
-            // tslint:disable-next-line no-console
-            console.log("Failed to parse style", style, error);
-        }
-
-        return {};
-    }
-
-    public static validateProps(props: BarChartContainerProps): string {
-        let errorMessage = "";
-        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
-            errorMessage += ` data source type is set to 'Microflow' but 'Source microflow' is missing \n`;
-        }
-
-        return errorMessage && `Configuration error :\n\n ${errorMessage}`;
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
-        this.subscriptionHandles.forEach(mx.data.unsubscribe);
-        this.subscriptionHandles = [];
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
+        }
 
         if (mxObject) {
-            this.subscriptionHandles.push(mx.data.subscribe({
-                callback: () => this.fetchData(mxObject),
+            this.subscriptionHandle = window.mx.data.subscribe({
+                callback: () => this.fetchData,
                 guid: mxObject.getGuid()
-            }));
+            });
         }
     }
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
-        this.data = [];
-        if (mxObject && this.props.seriesEntity) {
-            if (this.props.dataSourceType === "xpath") {
+        if (mxObject && this.props.dataEntity) {
+            if (this.props.dataSourceType === "XPath") {
                 this.fetchByXpath(mxObject);
             } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
                 this.fetchByMicroflow(mxObject.getGuid());
@@ -162,13 +137,13 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
                     const entityName = seriesEntity.indexOf("/") > -1
                         ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
                         : seriesEntity;
-                    const xpath = "//" + entityName + constraint;
+                    const XPath = "//" + entityName + constraint;
                     window.mx.data.get({
                         callback: seriesData => this.mapData(
                             seriesData as mendix.lib.MxObject[], seriesName, seriesCount, index
                         ),
                         error: error => window.mx.ui.error(
-                            `An error occurred while retrieving data via XPath (${xpath}): ${error}`
+                            `An error occurred while retrieving data via XPath (${XPath}): ${error}`
                         ),
                         filter: {
                             sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
@@ -184,7 +159,10 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
         const actionname = this.props.dataSourceMicroflow;
         mx.ui.action(actionname, {
             callback: mxObjects => this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[]),
-            error: error => window.mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`),
+            error: error => {
+                mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
+                this.setState({ data: [] });
+            },
             params: {
                 applyto: "selection",
                 guids: [ guid ]
@@ -214,26 +192,53 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
     private mapData(seriesData: mendix.lib.MxObject[], seriesName: string, seriesCount: number, index: number) {
         const fetchedData = seriesData.map(value => {
             return {
-                x: value.get(this.props.xValueAttribute) as Datum,
-                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
+                x: value.get(this.props.xValueAttribute) as Plotly.Datum,
+                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Plotly.Datum
             };
         });
 
-        const barData: Partial<ScatterData> = {
+        const barData: Partial<Plotly.ScatterData> = {
             name: seriesName,
             type: "bar",
             x: fetchedData.map(value => value.x),
             y: fetchedData.map(value => value.y)
         };
 
-        this.addSeries(barData as ScatterData, seriesCount === index + 1);
+        this.addSeries(barData as Plotly.ScatterData, seriesCount === index + 1);
 
     }
 
-    private addSeries(series: ScatterData, isFinal = false) {
+    private addSeries(series: Plotly.ScatterData, isFinal = false) {
         this.data.push(series);
         if (isFinal) {
             this.setState({ data: this.data });
         }
+    }
+
+    public static parseStyle(style = ""): { [key: string]: string } {
+        try {
+            return style.split(";").reduce<{ [key: string]: string }>((styleObject, line) => {
+                const pair = line.split(":");
+                if (pair.length === 2) {
+                    const name = pair[0].trim().replace(/(-.)/g, match => match[1].toUpperCase());
+                    styleObject[name] = pair[1].trim();
+                }
+                return styleObject;
+            }, {});
+        } catch (error) {
+            // tslint:disable-next-line no-console
+            console.log("Failed to parse style", style, error);
+        }
+
+        return {};
+    }
+
+    public static validateProps(props: BarChartContainerProps): string {
+        let errorMessage = "";
+        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
+            errorMessage += ` data source type is set to 'Microflow' but 'Source microflow' is missing \n`;
+        }
+
+        return errorMessage && `Configuration error :\n\n ${errorMessage}`;
     }
 }
