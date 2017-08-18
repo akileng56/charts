@@ -1,7 +1,5 @@
 import { Component, createElement } from "react";
 
-import { PieData } from "plotly.js";
-
 import { Alert } from "../components/Alert";
 import { PieChart } from "./components/PieChart";
 import PieChartContainer, { PieChartContainerProps } from "./components/PieChartContainer";
@@ -36,7 +34,7 @@ export class preview extends Component<PieChartContainerProps, {}> {
         );
     }
 
-    private getDefaultData(chartType: string): PieData {
+    private getDefaultData(chartType: string): Plotly.PieData {
         return {
             hole: chartType === "doughnut" ? .4 : 0,
             hoverinfo: "label+name",

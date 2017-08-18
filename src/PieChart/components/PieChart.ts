@@ -1,15 +1,14 @@
 import { CSSProperties, Component, createElement } from "react";
 
 import * as classNames from "classnames";
-import { Config, Layout, PieData } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
 
 import { ChartType } from "./PieChartContainer";
 
 interface PieChartProps {
-    data?: PieData[];
-    config?: Partial<Config>;
-    layout?: Partial<Layout>;
+    data?: Plotly.PieData[];
+    config?: Partial<Plotly.Config>;
+    layout?: Partial<Plotly.Layout>;
     type: ChartType;
     width: number;
     widthUnit: string;
@@ -21,7 +20,7 @@ interface PieChartProps {
 
 export class PieChart extends Component<PieChartProps, {}> {
     private pieChartNode: HTMLDivElement;
-    private data: PieData[] = [ {
+    private data: Plotly.PieData[] = [ {
         hole: this.props.type === "doughnut" ? .4 : 0,
         hoverinfo: "label+name",
         labels: [ "US", "China", "European Union", "Russian Federation", "Brazil", "India", "Rest of World" ],
@@ -69,7 +68,7 @@ export class PieChart extends Component<PieChartProps, {}> {
         const { data, config, layout } = props;
 
         if (this.pieChartNode) {
-            if (data.values && data.values.length) {
+            if (data && data[0].values.length) {
                 Plotly.newPlot(this.pieChartNode, data, layout, config);
             } else {
                 Plotly.newPlot(this.pieChartNode, this.data, layout, config);

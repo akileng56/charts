@@ -51,6 +51,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
             values: []
         };
         this.fetchData = this.fetchData.bind(this);
+        this.processData = this.processData.bind(this);
     }
 
     render() {
@@ -68,10 +69,10 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
                 data: [ {
                     hole: this.props.chartType === "doughnut" ? .4 : 0,
                     hoverinfo: "label",
-                    labels: this.state.labels,
-                    marker: { colors: this.state.colors },
+                    labels: this.state.labels || [],
+                    marker: { colors: this.state.colors || [] },
                     type: "pie",
-                    values: this.state.values
+                    values: this.state.values || []
                 } ],
                 height: this.props.height,
                 heightUnit: this.props.heightUnit,
@@ -91,7 +92,7 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
 
     componentWillReceiveProps(newProps: PieChartContainerProps) {
         this.resetSubscriptions(newProps.mxObject);
-        this.fetchData();
+        this.fetchData(newProps.mxObject);
     }
 
     componentWillUnmount() {
@@ -107,18 +108,18 @@ export default class PieChartContainer extends Component<PieChartContainerProps,
 
         if (mxObject) {
             this.subscriptionHandle = window.mx.data.subscribe({
-                callback: this.fetchData,
+                callback: () => this.fetchData(mxObject),
                 guid: mxObject.getGuid()
             });
         }
     }
 
-    private fetchData() {
-        if (this.props.mxObject && this.props.dataEntity) {
+    private fetchData(mxObject?: mendix.lib.MxObject) {
+        if (mxObject && this.props.dataEntity) {
             if (this.props.dataSourceType === "XPath") {
-                this.fetchByXPath(this.props.mxObject);
+                this.fetchByXPath(mxObject);
             } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
-                this.fetchByMicroflow(this.props.mxObject.getGuid());
+                this.fetchByMicroflow(mxObject.getGuid());
             }
         }
     }
