@@ -3,23 +3,24 @@ import * as classNames from "classnames";
 
 import { HeightUnit, WidthUnit } from "./BarChartContainer";
 import * as Plotly from "plotly.js/dist/plotly";
+import "core-js/es6/promise";
 
 interface BarChartProps {
     config?: Partial<Plotly.Config>;
     className?: string;
+    clickable?: boolean;
     data?: Plotly.ScatterData[];
     height: number;
     heightUnit: HeightUnit;
     layout?: Partial<Plotly.Layout>;
+    onClickAction?: () => void;
     style?: object;
     width: number;
     widthUnit: WidthUnit;
 }
 
 export class BarChart extends Component<BarChartProps, {}> {
-    private intervalID: number | null;
     private plotlyNode: HTMLDivElement;
-    private svg: SVGElement;
     private data: Partial<Plotly.ScatterData>[] = [ // tslint:disable-line
         {
             type: "bar",
@@ -39,17 +40,13 @@ export class BarChart extends Component<BarChartProps, {}> {
         return createElement("div", {
             className: classNames("widget-plotly-bar", this.props.className),
             ref: this.getPlotlyNodeRef,
-            style: {
-                ...this.getStyle(), ...this.props.style
-            }
+            style: { ...this.getStyle(), ...this.props.style }
         });
     }
 
     componentDidMount() {
         this.renderChart(this.props);
         this.setUpEvents();
-        this.adjustStyle();
-        this.fixChartRendering();
     }
 
     componentWillReceiveProps(newProps: BarChartProps) {
@@ -67,13 +64,15 @@ export class BarChart extends Component<BarChartProps, {}> {
         this.plotlyNode = node;
     }
 
-    private adjustStyle() {
+    private renderChart(props: BarChartProps) {
+        const { config, data, layout } = props;
         if (this.plotlyNode) {
-            const wrapperElement = this.plotlyNode.parentElement;
-            if (this.props.heightUnit === "percentageOfParent" && wrapperElement) {
-                wrapperElement.style.height = "100%";
-                wrapperElement.style.width = "100%";
-            }
+            Plotly.newPlot(this.plotlyNode, data && data.length ? data : this.data, layout, config)
+                .then(myPlot => myPlot.on("plotly_click", () => {
+                    if (this.props.onClickAction) {
+                        this.props.onClickAction();
+                    }
+                }));
         }
     }
 
@@ -89,13 +88,6 @@ export class BarChart extends Component<BarChartProps, {}> {
         }
     }
 
-    private renderChart(props: BarChartProps) {
-        const { config, data, layout } = props;
-        if (this.plotlyNode) {
-            Plotly.newPlot(this.plotlyNode, data && data.length ? data : this.data, layout, config);
-        }
-    }
-
     private getStyle(): object {
         const style: { paddingBottom?: string; width: string, height?: string } = {
             width: this.props.widthUnit === "percentage" ? `${this.props.width}%` : `${this.props.width}`
@@ -103,7 +95,7 @@ export class BarChart extends Component<BarChartProps, {}> {
         if (this.props.heightUnit === "percentageOfWidth") {
             style.paddingBottom = `${this.props.height}%`;
         } else if (this.props.heightUnit === "pixels") {
-            style.paddingBottom = `${this.props.height}`;
+            style.paddingBottom = `${this.props.height}px`;
         } else if (this.props.heightUnit === "percentageOfParent") {
             style.height = `${this.props.height}%`;
         }
@@ -113,15 +105,5 @@ export class BarChart extends Component<BarChartProps, {}> {
 
     private onResize() {
         Plotly.Plots.resize(this.plotlyNode);
-    }
-
-    private fixChartRendering() {
-        this.intervalID = setInterval(() => {
-            if (this.svg && this.svg.parentElement && this.svg.parentElement.offsetHeight !== 0 && this.intervalID) {
-                Plotly.Plots.resize(this.plotlyNode);
-                clearInterval(this.intervalID);
-                this.intervalID = null;
-            }
-        }, 100);
     }
 }

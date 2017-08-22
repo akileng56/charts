@@ -16,6 +16,7 @@ export interface BarChartContainerProps extends WrapperProps {
     dataSourceMicroflow: string;
     dataSourceType: "XPath" | "microflow";
     entityConstraint: string;
+    executeMicroflow: string;
     responsive: boolean;
     title?: string;
     seriesEntity: string;
@@ -27,6 +28,8 @@ export interface BarChartContainerProps extends WrapperProps {
     widthUnit: WidthUnit;
     height: number;
     heightUnit: HeightUnit;
+    onClickEvent: OnClickOptions;
+    page: string;
     xAxisLabel: string;
     xValueAttribute: string;
     yAxisLabel: string;
@@ -41,6 +44,7 @@ interface BarChartContainerState {
 
 export type BarMode = "group" | "stack";
 export type HeightUnit = "percentageOfWidth" | "percentageOfParent" | "pixels";
+type OnClickOptions = "doNothing" | "showPage" | "callMicroflow";
 export type WidthUnit = "percentage" | "pixels";
 
 export default class BarChartContainer extends Component<BarChartContainerProps, BarChartContainerState> {
@@ -55,6 +59,7 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
             data: []
         };
         this.fetchData = this.fetchData.bind(this);
+        this.handleOnClick = this.handleOnClick.bind(this);
     }
 
     render() {
@@ -68,6 +73,7 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
             }
             return createElement(BarChart, {
                 className: this.props.class,
+                clickable: this.props.onClickEvent !== "doNothing",
                 config: { displayModeBar: this.props.showToolbar },
                 data: this.state.data,
                 height: this.props.height,
@@ -81,6 +87,7 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
                         title: this.props.yAxisLabel
                     }
                 },
+                onClickAction: this.handleOnClick,
                 style: BarChartContainer.parseStyle(this.props.style),
                 width: this.props.width,
                 widthUnit: this.props.widthUnit
@@ -108,7 +115,7 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
 
         if (mxObject) {
             this.subscriptionHandle = window.mx.data.subscribe({
-                callback: () => this.fetchData,
+                callback: () => this.fetchData(),
                 guid: mxObject.getGuid()
             });
         }
@@ -240,5 +247,30 @@ export default class BarChartContainer extends Component<BarChartContainerProps,
         }
 
         return errorMessage && `Configuration error :\n\n ${errorMessage}`;
+    }
+
+    private handleOnClick() {
+        const { mxObject, executeMicroflow, onClickEvent, page } = this.props;
+        if (!mxObject || !mxObject.getGuid()) {
+            return;
+        }
+        const context = new mendix.lib.MxContext();
+        context.setContext(mxObject.getEntity(), mxObject.getGuid());
+        if (onClickEvent === "callMicroflow" && executeMicroflow && mxObject.getGuid()) {
+            window.mx.ui.action(executeMicroflow, {
+                error: error => window.mx.ui.error(
+                    `Error while executing microflow: ${executeMicroflow}: ${error.message}`
+                ),
+                params: {
+                    applyto: "selection",
+                    guids: [ mxObject.getGuid() ]
+                }
+            });
+        } else if (onClickEvent === "showPage" && page && mxObject.getGuid()) {
+            window.mx.ui.openForm(page, {
+                context,
+                error: error => window.mx.ui.error(`Error while opening page ${page}: ${error.message}`)
+            });
+        }
     }
 }
