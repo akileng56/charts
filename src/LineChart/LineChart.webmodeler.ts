@@ -3,7 +3,7 @@ import { Component, createElement } from "react";
 import { LineChart } from "./components/LineChart";
 import LineChartContainer, { LineChartContainerProps } from "./components/LineChartContainer";
 import { Alert } from "../components/Alert";
-import { LineData } from "./LineChart";
+import { LineData, Series } from "./LineChart";
 
 declare function require(name: string): string;
 
@@ -62,13 +62,15 @@ export function getPreviewCss() {
 }
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
-    if (valueMap.dataSourceType === "xpath") {
-        visibilityMap.entityConstraint = true;
-        visibilityMap.dataSourceMicroflow = false;
-    } else if (valueMap.dataSourceType === "microflow") {
-        visibilityMap.entityConstraint = false;
-        visibilityMap.dataSourceMicroflow = true;
-    }
+    valueMap.seriesConfig.forEach((config: Series, index: number) => {
+        if (config.sourceType === "xpath") {
+            visibilityMap.seriesConfig[index].entityConstraint = true;
+            visibilityMap.seriesConfig[index].dataSourceMicroflow = false;
+        } else if (config.sourceType === "microflow") {
+            visibilityMap.seriesConfig[index].entityConstraint = false;
+            visibilityMap.seriesConfig[index].dataSourceMicroflow = true;
+        }
+    });
 
     return visibilityMap;
 }

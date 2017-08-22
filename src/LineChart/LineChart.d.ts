@@ -6,17 +6,7 @@ export type Mode = "lines" | "markers" | "text" | "lines+markers" | "text+marker
 export default ModelProps;
 
 export interface ModelProps {
-    seriesEntity: string;
-    seriesNameAttribute: string;
-    dataEntity: string;
-    dataSourceType: "xpath" | "microflow";
-    entityConstraint: string;
-    dataSourceMicroflow: string;
-    xValueAttribute: string;
-    yValueAttribute: string;
-    xAxisSortAttribute: string;
-    mode: "lines" | "markers" | "text" | "linesomarkers";
-    lineColor: string;
+    seriesConfig: Series[];
     width: number;
     height: number;
     showGrid: boolean;
@@ -27,6 +17,20 @@ export interface ModelProps {
     yAxisLabel: string;
     widthUnit: "percentage" | "pixels";
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
+}
+
+export interface Series {
+    seriesEntity: string;
+    seriesNameAttribute: string;
+    dataEntity: string;
+    sourceType: "xpath" | "microflow";
+    entityConstraint: string;
+    dataSourceMicroflow: string;
+    xValueAttribute: string;
+    yValueAttribute: string;
+    xValueSortAttribute: string;
+    mode: "lines" | "markers" | "text" | "linesomarkers";
+    lineColorAttribute: string;
 }
 
 export interface LineData {

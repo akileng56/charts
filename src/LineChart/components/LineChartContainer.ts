@@ -3,7 +3,16 @@ import { Component, createElement } from "react";
 import { Datum } from "plotly.js";
 import { Alert } from "./../../components/Alert";
 import { LineChart } from "./LineChart";
-import { LineData, Mode, ModelProps } from "../LineChart";
+import { LineData, Mode, ModelProps, Series } from "../LineChart";
+
+interface DataProps {
+    serieObject: Series;
+    seriesCount: number;
+    index: number;
+    guid?: string;
+    lineColor?: string;
+    seriesName?: string;
+}
 
 interface WrapperProps {
     class?: string;
@@ -21,7 +30,7 @@ interface LineChartContainerState {
 }
 
 export default class LineChartContainer extends Component<LineChartContainerProps, LineChartContainerState> {
-    private subscriptionHandles: number[] = [];
+    private subscriptionHandle: number;
     private data: LineData[] = [];
 
     constructor(props: LineChartContainerProps) {
@@ -74,8 +83,8 @@ export default class LineChartContainer extends Component<LineChartContainerProp
     }
 
     componentWillUnmount() {
-        if (this.subscriptionHandles) {
-            this.subscriptionHandles.forEach(mx.data.unsubscribe);
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
         }
     }
 
@@ -99,47 +108,67 @@ export default class LineChartContainer extends Component<LineChartContainerProp
 
     public static validateProps(props: LineChartContainerProps): string {
         let errorMessage = "";
-        if (props.dataSourceType === "microflow" && !props.dataSourceMicroflow) {
-            errorMessage += ` data source type is set to 'Microflow' but 'Source microflow' is missing \n`;
+        const incorrectObjectingNames = props.seriesConfig
+            .filter(object => object.sourceType === "microflow" && !object.dataSourceMicroflow)
+            .map((_inorrect, index) => index + 1)
+            .join(", ");
+
+        if (incorrectObjectingNames) {
+            errorMessage += `Series item ${incorrectObjectingNames}` +
+                ` - 'Data source' type is set to 'Microflow' but 'Microflow' is missing \n`;
         }
 
         return errorMessage && `Configuration error :\n\n ${errorMessage}`;
     }
 
     private resetSubscriptions(mxObject?: mendix.lib.MxObject) {
-        this.subscriptionHandles.forEach(mx.data.unsubscribe);
-        this.subscriptionHandles = [];
+        if (this.subscriptionHandle) {
+            window.mx.data.unsubscribe(this.subscriptionHandle);
+        }
 
         if (mxObject) {
-            this.subscriptionHandles.push(mx.data.subscribe({
+            this.subscriptionHandle = window.mx.data.subscribe({
                 callback: () => this.fetchData(mxObject),
                 guid: mxObject.getGuid()
-            }));
+            });
         }
     }
 
     private fetchData(mxObject?: mendix.lib.MxObject) {
         this.data = [];
-        if (mxObject && this.props.seriesEntity) {
-            if (this.props.dataSourceType === "xpath") {
-                this.fetchByXPath(mxObject);
-            } else if (this.props.dataSourceType === "microflow" && this.props.dataSourceMicroflow) {
-                this.fetchByMicroflow(mxObject.getGuid());
+        const { seriesConfig } = this.props;
+        seriesConfig.forEach((serieObject, index) => {
+            const data: DataProps = {
+                guid: mxObject.getGuid(),
+                index,
+                serieObject,
+                seriesCount: seriesConfig.length
+            };
+            if (serieObject.sourceType === "xpath") {
+                this.fetchByXPath(data);
+            } else if (serieObject.sourceType === "microflow" && serieObject.dataSourceMicroflow) {
+                this.fetchByMicroflow(data);
             }
-        }
+        });
     }
 
-    private fetchByXPath(mxObject: mendix.lib.MxObject) {
-        const { seriesEntity } = this.props;
-        const constraint = this.props.entityConstraint
-            ? this.props.entityConstraint.replace("[%CurrentObject%]", mxObject.getGuid())
+    private fetchByXPath(data: DataProps) {
+        const constraint = data.serieObject.entityConstraint
+            ? data.serieObject.entityConstraint.replace("[%CurrentObject%]", data.guid)
             : "";
-        const entityName = seriesEntity.indexOf("/") > -1
-            ? seriesEntity.split("/")[seriesEntity.split("/").length - 1]
-            : seriesEntity;
-        const xpath = "//" + entityName + constraint;
+        const xpath = "//" + data.serieObject.seriesEntity + constraint;
         window.mx.data.get({
-            callback: mxObjects => this.fetchDataFromSeries(mxObjects),
+            callback: mxObjects => {
+                if (data.serieObject.dataEntity && data.serieObject.dataEntity.indexOf("/") > -1) {
+                    this.fetchDataFromSeries(mxObjects, data);
+                } else {
+                    if (mxObjects.length) {
+                        data.seriesName = mxObjects[0].get(data.serieObject.seriesNameAttribute) as string;
+                        data.lineColor = mxObjects[0].get(data.serieObject.lineColorAttribute) as string;
+                    }
+                    this.processData(mxObjects, data);
+                }
+            },
             error: error => {
                 mx.ui.error(`An error occurred while retrieving data via XPath (${xpath}): ${error}`);
                 this.setState({ data: [] });
@@ -148,62 +177,82 @@ export default class LineChartContainer extends Component<LineChartContainerProp
         });
     }
 
-    private fetchByMicroflow(guid: string) {
-        const actionname = this.props.dataSourceMicroflow;
+    private fetchByMicroflow(data: DataProps) {
+        const actionname = data.serieObject.dataSourceMicroflow;
         mx.ui.action(actionname, {
-            callback: mxObjects => this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[]),
+            callback: mxObjects => {
+                if (data.serieObject.dataEntity && data.serieObject.dataEntity.indexOf("/") > -1) {
+                    this.fetchDataFromSeries(mxObjects as mendix.lib.MxObject[], data);
+                } else {
+                    const resultObjects = mxObjects as mendix.lib.MxObject[];
+                    if (resultObjects.length) {
+                        data.seriesName = resultObjects[0].get(data.serieObject.seriesNameAttribute) as string;
+                        data.lineColor = resultObjects[0].get(data.serieObject.lineColorAttribute) as string;
+                    }
+                    this.processData(mxObjects as mendix.lib.MxObject[], data);
+                }
+            },
             error: error => {
                 mx.ui.error(`Error while retrieving microflow data ${actionname}: ${error.message}`);
                 this.setState({ data: [] });
             },
             params: {
                 applyto: "selection",
-                guids: [ guid ]
+                guids: [ data.guid ]
             }
         });
     }
 
-    private fetchDataFromSeries(series: mendix.lib.MxObject[]) {
+    private fetchDataFromSeries(series: mendix.lib.MxObject[], data: DataProps) {
         const seriesCount = series.length;
         series.forEach((object, index) => {
-            const lineColor = object.get(this.props.lineColor) as string;
-            const seriesName = object.get(this.props.seriesNameAttribute) as string;
-            object.fetch(this.props.dataEntity, (values: mendix.lib.MxObject[]) => {
+            const seriesData = {
+                index,
+                lineColor: object.get(data.serieObject.lineColorAttribute) as string,
+                serieObject: data.serieObject,
+                seriesCount,
+                seriesName: object.get(data.serieObject.seriesNameAttribute) as string
+            };
+            data.index = index;
+            data.seriesCount = seriesCount;
+            object.fetch(data.serieObject.dataEntity, (values: mendix.lib.MxObject[]) => {
                 window.mx.data.get({
-                    callback: mxObjects => {
-                        const fetchedData = mxObjects.map(value => {
-                            return {
-                                x: value.get(this.props.xValueAttribute) as Datum,
-                                y: parseInt(value.get(this.props.yValueAttribute) as string, 10) as Datum
-                            };
-                        });
-
-                        const lineData: LineData = {
-                            connectgaps: true,
-                            line: {
-                                color: lineColor
-                            },
-                            mode: this.props.mode.replace("o", "+") as Mode,
-                            name: seriesName,
-                            type: "scatter",
-                            x: fetchedData.map(value => value.x),
-                            y: fetchedData.map(value => value.y)
-                        };
-
-                        this.addData(lineData, seriesCount === index + 1);
-                    },
+                    callback: mxObjects => this.processData(mxObjects, seriesData),
                     error: error => {
                         mx.ui.error(`An error occurred while retrieving data values: ${error}`);
                         this.setState({ data: [] });
                     },
                     filter: {
-                        attributes: [ this.props.xValueAttribute, this.props.yValueAttribute ],
-                        sort: [ [ this.props.xAxisSortAttribute, "asc" ] ]
+                        attributes: [ data.serieObject.xValueAttribute, data.serieObject.yValueAttribute ],
+                        sort: [ [ data.serieObject.xValueAttribute, "asc" ] ]
                     },
                     guids: values.map(value => value.getGuid())
                 });
             });
         });
+    }
+
+    private processData(mxObjects: mendix.lib.MxObject[], data?: DataProps) {
+        const fetchedData = mxObjects.map(value => {
+            return {
+                x: value.get(data.serieObject.xValueAttribute) as Datum,
+                y: parseInt(value.get(data.serieObject.yValueAttribute) as string, 10) as Datum
+            };
+        });
+
+        const lineData: LineData = {
+            connectgaps: true,
+            line: {
+                color: data.lineColor
+            },
+            mode: data.serieObject.mode.replace("o", "+") as Mode,
+            name: data.seriesName,
+            type: "scatter",
+            x: fetchedData.map(value => value.x),
+            y: fetchedData.map(value => value.y)
+        };
+
+        this.addData(lineData, data.seriesCount === data.index + 1);
     }
 
     private addData(seriesData: LineData, isFinal = false) {
