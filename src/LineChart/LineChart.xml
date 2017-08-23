@@ -5,38 +5,30 @@
     <icon/>
     <properties>
         <property key="seriesConfig" type="object" isList="true" required="false">
-            <caption>Static series</caption>
-            <category>Data source</category>
+            <caption>Series</caption>
+            <category>Static series</category>
             <description>Add a serie and configure its properties</description>
             <properties>
-                <property key="seriesEntity" type="entity" required="false">
-                    <caption>Series entity</caption>
+                <property key="name" type="string" required="false">
+                    <caption>Series name</caption>
                     <category>Data source</category>
-                    <description>The entity from which the series will be retrieved</description>
+                    <description/>
                 </property>
-                <property key="seriesNameAttribute" type="attribute" entityProperty="seriesEntity" required="false">
-                    <caption>Series name attribute</caption>
-                    <category>Data source</category>
-                    <description>Attribute that holds the name of the series</description>
-                    <attributeTypes>
-                        <attributeType name="String"/>
-                    </attributeTypes>
-                </property>
-                <property key="dataEntity" type="entity" isPath="optional" pathType="referenceSet" entityProperty="seriesEntity" required="false">
+                <property key="dataEntity" type="entity" required="false">
                     <caption>Data entity</caption>
                     <category>Data source</category>
-                    <description>The entity from which the data values will be retrieved (used when there are dynamic series in the 'Series entity', for static series it can be the same as 'Series entity')</description>
+                    <description>The entity from which the data values will be retrieved</description>
                 </property>
-                <property key="sourceType" type="enumeration" defaultValue="xpath">
+                <property key="dataSourceType" type="enumeration" defaultValue="XPath">
                     <caption>Data source</caption>
                     <category>Data source</category>
                     <description>Type of source</description>
                     <enumerationValues>
-                        <enumerationValue key="xpath">Database/XPath</enumerationValue>
+                        <enumerationValue key="XPath">Database/XPath</enumerationValue>
                         <enumerationValue key="microflow">Microflow</enumerationValue>
                     </enumerationValues>
                 </property>
-                <property key="entityConstraint" type="entityConstraint" entityProperty="seriesEntity" required="false">
+                <property key="entityConstraint" type="entityConstraint" entityProperty="dataEntity" required="false">
                     <caption>XPath constraint</caption>
                     <category>Data source</category>
                     <description>Constraint on the data from the series entity (used when data soucre is Database/XPath)</description>
@@ -44,10 +36,10 @@
                 <property key="dataSourceMicroflow" type="microflow" required="false">
                     <caption>Microflow</caption>
                     <category>Data source</category>
-                    <description>Returns a list of series/values</description>
-                    <returnType type="Object" entityProperty="seriesEntity" isList="true"/>
+                    <description>Returns a list of data values</description>
+                    <returnType type="Object" entityProperty="dataEntity" isList="true"/>
                 </property>
-                <property key="xValueAttribute" type="attribute" entityProperty="dataEntity">
+                <property key="xValueAttribute" type="attribute" entityProperty="dataEntity" required="false">
                     <caption>X-axis data attribute</caption>
                     <category>Data source</category>
                     <description>Attribute containing x-axis data</description>
@@ -58,7 +50,7 @@
                         <attributeType name="Integer"/>
                     </attributeTypes>
                 </property>
-                <property key="yValueAttribute" type="attribute" entityProperty="dataEntity">
+                <property key="yValueAttribute" type="attribute" entityProperty="dataEntity" required="false">
                     <caption>Y-axis data attribute</caption>
                     <category>Data source</category>
                     <description>Attribute containing y-axis data</description>
@@ -68,7 +60,7 @@
                         <attributeType name="Integer"/>
                     </attributeTypes>
                 </property>
-                <property key="xValueSortAttribute" type="attribute" entityProperty="dataEntity">
+                <property key="xValueSortAttribute" type="attribute" entityProperty="dataEntity" required="false">
                     <caption>X-axis sort attribute</caption>
                     <category>Data source</category>
                     <description>Attribute to use for sorting the x-axis data</description>
@@ -91,15 +83,103 @@
                             <enumerationValue key="linesomarkers">Lines with markers</enumerationValue>
                         </enumerationValues>
                 </property>
-                <property key="lineColorAttribute" type="attribute" entityProperty="seriesEntity" required="false">
-                    <caption>Line color attribute</caption>
+                <property key="lineColor" type="string" required="false">
+                    <caption>Line color</caption>
                     <category>Appearance</category>
                     <description/>
-                    <attributeTypes>
-                        <attributeType name="String"/>
-                    </attributeTypes>
                 </property>
             </properties>
+        </property>
+        <property key="seriesEntity" type="entity" required="false">
+            <caption>Series entity</caption>
+            <category>Dynamic series</category>
+            <description>The entity from which the series will be retrieved</description>
+        </property>
+        <property key="seriesNameAttribute" type="attribute" entityProperty="seriesEntity" required="false">
+            <caption>Series name attribute</caption>
+            <category>Dynamic series</category>
+            <description>Attribute that holds the name of the series</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
+        <property key="dataEntity" type="entity" isPath="yes" pathType="referenceSet" entityProperty="seriesEntity" required="false">
+            <caption>Data entity</caption>
+            <category>Dynamic series</category>
+            <description>The entity from which the data values will be retrieved</description>
+        </property>
+        <property key="dataSourceType" type="enumeration" defaultValue="XPath">
+            <caption>Data Source</caption>
+            <category>Dynamic series</category>
+            <description/>
+            <enumerationValues>
+                <enumerationValue key="XPath">Database/XPath</enumerationValue>
+                <enumerationValue key="microflow">Microflow</enumerationValue>
+            </enumerationValues>
+        </property>
+        <property key="entityConstraint" type="entityConstraint" entityProperty="seriesEntity" required="false">
+            <caption>XPath constraint</caption>
+            <category>Dynamic series</category>
+            <description>Constraint on the data from the data entity (used when data soucre is Database/XPath)</description>
+        </property>
+        <property key="dataSourceMicroflow" type="microflow" required="false">
+            <caption>Microflow</caption>
+            <category>Dynamic series</category>
+            <description>Returns a list of series</description>
+            <returnType type="Object" entityProperty="seriesEntity" isList="true"/>
+        </property>
+        <property key="xValueAttribute" type="attribute" entityProperty="dataEntity" required="false">
+            <caption>X value attribute</caption>
+            <category>Dynamic series</category>
+            <description>Attribute containing x-axis value</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+                <attributeType name="Integer"/>
+                <attributeType name="Decimal"/>
+                <attributeType name="Long"/>
+                <attributeType name="DateTime"/>
+            </attributeTypes>
+        </property>
+        <property key="yValueAttribute" type="attribute" entityProperty="dataEntity" required="false">
+            <caption>Y value attribute</caption>
+            <category>Dynamic series</category>
+            <description>Attribute containing y-axis value</description>
+            <attributeTypes>
+                <attributeType name="Integer"/>
+                <attributeType name="Decimal"/>
+                <attributeType name="Long"/>
+            </attributeTypes>
+        </property>
+        <property key="xAxisSortAttribute" type="attribute" entityProperty="dataEntity" required="false">
+            <caption>X-axis sort attribute</caption>
+            <category>Dynamic series</category>
+            <description>Attribute to use for sorting the x-axis data</description>
+            <attributeTypes>
+                <attributeType name="Decimal"/>
+                <attributeType name="Long"/>
+                <attributeType name="Integer"/>
+                <attributeType name="String"/>
+                <attributeType name="AutoNumber"/>
+                <attributeType name="DateTime"/>
+            </attributeTypes>
+        </property>
+        <property key="lineColorAttribute" type="attribute" entityProperty="seriesEntity" required="false">
+            <caption>Line color attribute</caption>
+            <category>Dynamic series</category>
+            <description/>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
+        <property key="mode" type="enumeration" defaultValue="linesomarkers">
+            <caption>Mode</caption>
+            <category>Dynamic series</category>
+            <description></description>
+                <enumerationValues>
+                    <enumerationValue key="lines">Lines</enumerationValue>
+                    <enumerationValue key="markers">Markers</enumerationValue>
+                    <enumerationValue key="linesomarkers">Lines with markers</enumerationValue>
+                </enumerationValues>
         </property>
         <property key="xAxisLabel" type="string" required="false">
             <caption>X-axis label</caption>

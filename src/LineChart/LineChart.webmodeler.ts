@@ -63,10 +63,10 @@ export function getPreviewCss() {
 
 export function getVisibleProperties(valueMap: LineChartContainerProps, visibilityMap: VisibilityMap) {
     valueMap.seriesConfig.forEach((config: Series, index: number) => {
-        if (config.sourceType === "xpath") {
+        if (config.dataSourceType === "XPath") {
             visibilityMap.seriesConfig[index].entityConstraint = true;
             visibilityMap.seriesConfig[index].dataSourceMicroflow = false;
-        } else if (config.sourceType === "microflow") {
+        } else if (config.dataSourceType === "microflow") {
             visibilityMap.seriesConfig[index].entityConstraint = false;
             visibilityMap.seriesConfig[index].dataSourceMicroflow = true;
         }

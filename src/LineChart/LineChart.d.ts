@@ -7,30 +7,40 @@ export default ModelProps;
 
 export interface ModelProps {
     seriesConfig: Series[];
-    width: number;
-    height: number;
+    seriesEntity: string;
+    seriesNameAttribute: string;
+    dataEntity: string;
+    dataSourceType: "XPath" | "microflow";
+    entityConstraint: string;
+    dataSourceMicroflow: string;
+    xValueAttribute: string;
+    yValueAttribute: string;
+    xAxisSortAttribute: string;
+    lineColorAttribute: string;
+    mode: "lines" | "markers" | "text" | "linesomarkers";
+    xAxisLabel: string;
+    yAxisLabel: string;
     showGrid: boolean;
     showToolBar: boolean;
     showLegend: boolean;
     responsive: boolean;
-    xAxisLabel: string;
-    yAxisLabel: string;
     widthUnit: "percentage" | "pixels";
+    width: number;
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
+    height: number;
 }
 
 export interface Series {
-    seriesEntity: string;
-    seriesNameAttribute: string;
+    name: string;
     dataEntity: string;
-    sourceType: "xpath" | "microflow";
+    dataSourceType: "XPath" | "microflow";
     entityConstraint: string;
     dataSourceMicroflow: string;
     xValueAttribute: string;
     yValueAttribute: string;
     xValueSortAttribute: string;
     mode: "lines" | "markers" | "text" | "linesomarkers";
-    lineColorAttribute: string;
+    lineColor: string;
 }
 
 export interface LineData {
