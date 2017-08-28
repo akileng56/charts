@@ -1,26 +1,28 @@
 import { Component, createElement } from "react";
 import * as classNames from "classnames";
 
-import { Config, Layout, PlotlyStatic } from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly";
+import "core-js/es6/promise";
 
 import { LineData } from "../LineChart";
+import "../ui/LineChart.css";
 
 interface LineChartProps {
     data?: LineData[];
-    config?: Partial<Config>;
-    layout?: Partial<Layout>;
+    config?: Partial<Plotly.Config>;
+    layout?: Partial<Plotly.Layout>;
     width: number;
     widthUnit: string;
     height: number;
     heightUnit: string;
     className?: string;
     style?: object;
+    toolTipForm?: string;
 }
 
 class LineChart extends Component<LineChartProps, {}> {
-    private lineChart: HTMLDivElement;
-    private Plotly: PlotlyStatic;
+    private lineChartNode: HTMLDivElement;
+    private toolTipNode: HTMLDivElement;
     private data: LineData[] = [
         {
             connectgaps: true,
@@ -35,7 +37,6 @@ class LineChart extends Component<LineChartProps, {}> {
     constructor(props: LineChartProps) {
         super(props);
 
-        this.Plotly = Plotly;
         this.getPlotlyNodeRef = this.getPlotlyNodeRef.bind(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -48,7 +49,12 @@ class LineChart extends Component<LineChartProps, {}> {
                 ...this.getStyle(),
                 ...this.props.style
             }
-        });
+        },
+            createElement("div", {
+                className: "widget-chart-custom-tooltip",
+                ref: (node: HTMLDivElement) => this.toolTipNode = node
+            })
+        );
     }
 
     componentDidMount() {
@@ -62,19 +68,19 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     componentWillUnmount() {
-        if (this.lineChart) {
-            this.Plotly.purge(this.lineChart);
+        if (this.lineChartNode) {
+            Plotly.purge(this.lineChartNode);
         }
         window.removeEventListener("resize", this.onResize);
     }
 
     private getPlotlyNodeRef(node: HTMLDivElement) {
-        this.lineChart = node;
+        this.lineChartNode = node;
     }
 
     private adjustStyle() {
-        if (this.lineChart) {
-            const wrapperElement = this.lineChart.parentElement;
+        if (this.lineChartNode) {
+            const wrapperElement = this.lineChartNode.parentElement;
             if (this.props.heightUnit === "percentageOfParent" && wrapperElement) {
                 wrapperElement.style.height = "100%";
                 wrapperElement.style.width = "100%";
@@ -96,8 +102,26 @@ class LineChart extends Component<LineChartProps, {}> {
 
     private renderChart(props: LineChartProps) {
         const { data, config, layout } = props;
-        if (this.lineChart) {
-            this.Plotly.newPlot(this.lineChart, data && data.length ? data : this.data, layout, config);
+        if (this.lineChartNode) {
+            Plotly.newPlot(this.lineChartNode, data && data.length ? data : this.data, layout, config)
+                .then(myPlot => {
+                    myPlot.on("plotly_hover", Data => {
+                        if (this.props.toolTipForm) {
+                            Data.points.map((point) => {
+                                const distanceYaxis = Data.points[0].yaxis.l2p(point.y) + Data.points[0].yaxis._offset;
+                                const distanceXaxis = Data.points[0].xaxis.d2p(point.x) + Data.points[0].xaxis._offset;
+                                this.toolTipNode.style.top = distanceYaxis + "px";
+                                this.toolTipNode.style.left = distanceXaxis + "px";
+                                this.toolTipNode.style.opacity = "1";
+                            });
+                            window.mx.ui.openForm(this.props.toolTipForm, { domNode: this.toolTipNode });
+                        }
+                    });
+                    myPlot.on("plotly_unhover", () => {
+                        this.toolTipNode.innerHTML = "";
+                        this.toolTipNode.style.opacity = "0";
+                    });
+                });
         }
     }
 
@@ -116,7 +140,7 @@ class LineChart extends Component<LineChartProps, {}> {
     }
 
     private onResize() {
-        this.Plotly.Plots.resize(this.lineChart);
+        Plotly.Plots.resize(this.lineChartNode);
     }
 }
 

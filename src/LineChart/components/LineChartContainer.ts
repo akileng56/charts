@@ -64,6 +64,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
                 heightUnit: this.props.heightUnit,
                 layout: {
                     autosize: this.props.responsive,
+                    hovermode: "closest",
                     showlegend: this.props.showLegend,
                     xaxis: {
                         showgrid: this.props.showGrid,
@@ -75,6 +76,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
                     }
                 },
                 style: LineChartContainer.parseStyle(this.props.style),
+                toolTipForm: this.props.toolTipForm,
                 width: this.props.width,
                 widthUnit: this.props.widthUnit
             });
@@ -252,6 +254,7 @@ export default class LineChartContainer extends Component<LineChartContainerProp
 
         const lineData: LineData = {
             connectgaps: true,
+            hoveron: "points",
             line: {
                 color: data.lineColor
             },
@@ -261,6 +264,10 @@ export default class LineChartContainer extends Component<LineChartContainerProp
             x: fetchedData.map(value => value.x),
             y: fetchedData.map(value => value.y)
         };
+
+        if (this.props.toolTipForm) {
+            lineData.hoverinfo = "text";
+        }
 
         this.addData(lineData, data.seriesCount === data.index + 1);
     }

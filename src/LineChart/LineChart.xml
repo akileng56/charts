@@ -240,5 +240,10 @@
             <category>Appearance</category>
             <description>Height of the chart</description>
         </property>
+        <property key="toolTipForm" type="form" required="false">
+            <caption>Tooltip form</caption>
+            <category>Events</category>
+            <description/>
+        </property>
     </properties>
 </widget>

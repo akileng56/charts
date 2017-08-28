@@ -28,6 +28,7 @@ export interface ModelProps {
     width: number;
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
+    toolTipForm: string;
 }
 
 export interface Series {
